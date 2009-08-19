@@ -1,5 +1,8 @@
 # -*- ruby -*-
 
+# To regenerate gemspec for github
+# rake debug_gem > stompserver.gemspec
+
 require 'rubygems'
 require 'hoe'
 $LOAD_PATH << "./lib"
