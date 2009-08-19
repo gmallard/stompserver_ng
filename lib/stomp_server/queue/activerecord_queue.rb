@@ -80,6 +80,14 @@ class ActiveRecordQueue
   end
 
   def assign_id(frame, queue_name)
+
+    unless @frames[queue_name]
+      @frames[queue_name] = {
+        :last_index => 0,
+        :frames => [],
+      }
+    end
+
     msgid = @stompid[@frames[queue_name][:last_index] += 1]
     frame.headers['message-id'] = msgid
   end
