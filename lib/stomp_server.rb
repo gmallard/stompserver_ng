@@ -12,7 +12,7 @@ require 'stomp_server/queue/dbm_queue'
 require 'stomp_server/protocols/stomp'
 
 module StompServer
-  VERSION = '0.9.9.2009081900'
+  VERSION = '0.9.9.2009082000'
 
   class Configurator
     attr_accessor :opts

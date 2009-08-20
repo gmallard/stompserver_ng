@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.name = %q{stompserver}
-  s.version = "0.9.9.2009081900"
+  s.version = "0.9.9.2009082000"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lionel Bouton"]
-  s.date = %q{2009-08-19}
+  s.date = %q{2009-08-20}
   s.default_executable = %q{stompserver}
   s.description = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO
 queues, queue monitoring, and basic authentication.
