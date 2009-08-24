@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.name = %q{stompserver}
-  s.version = "0.9.9.2009082000"
+  s.version = "0.9.9.2009082400"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Lionel Bouton"]
-  s.date = %q{2009-08-20}
+  s.date = %q{2009-08-24}
   s.default_executable = %q{stompserver}
   s.description = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO
 queues, queue monitoring, and basic authentication.
@@ -15,7 +15,7 @@ Handles basic message queue processing}
   s.email = ["lionel-dev@bouton.name"]
   s.executables = ["stompserver"]
   s.extra_rdoc_files = ["History.txt", "Manifest.txt", "README.txt", "client/README.txt"]
-  s.files = ["History.txt", "Manifest.txt", "README.txt", "Rakefile", "STATUS", "bin/stompserver", "client/README.txt", "client/both.rb", "client/consume.rb", "client/send.rb", "config/stompserver.conf", "etc/passwd.example", "lib/stomp_server.rb", "lib/stomp_server/protocols/http.rb", "lib/stomp_server/protocols/stomp.rb", "lib/stomp_server/queue.rb", "lib/stomp_server/queue/activerecord_queue.rb", "lib/stomp_server/queue/ar_message.rb", "lib/stomp_server/queue/dbm_queue.rb", "lib/stomp_server/queue/file_queue.rb", "lib/stomp_server/queue/memory_queue.rb", "lib/stomp_server/queue_manager.rb", "lib/stomp_server/stomp_auth.rb", "lib/stomp_server/stomp_frame.rb", "lib/stomp_server/stomp_id.rb", "lib/stomp_server/stomp_user.rb", "lib/stomp_server/test_server.rb", "lib/stomp_server/topic_manager.rb", "setup.rb", "test/tesly.rb", "test/test_queue_manager.rb", "test/test_stomp_frame.rb", "test/test_topic_manager.rb", "test_todo/test_stomp_server.rb"]
+  s.files = ["History.txt", "Manifest.txt", "README.txt", "Rakefile", "STATUS", "bin/stompserver", "client/README.txt", "client/both.rb", "client/consume.rb", "client/send.rb", "config/stompserver.conf", "etc/passwd.example", "lib/stomp_server.rb", "lib/stomp_server/protocols/http.rb", "lib/stomp_server/protocols/stomp.rb", "lib/stomp_server/queue.rb", "lib/stomp_server/queue/activerecord_queue.rb", "lib/stomp_server/queue/ar_message.rb", "lib/stomp_server/queue/ar_reconnect.rb", "lib/stomp_server/queue/dbm_queue.rb", "lib/stomp_server/queue/file_queue.rb", "lib/stomp_server/queue/memory_queue.rb", "lib/stomp_server/queue_manager.rb", "lib/stomp_server/stomp_auth.rb", "lib/stomp_server/stomp_frame.rb", "lib/stomp_server/stomp_id.rb", "lib/stomp_server/stomp_user.rb", "lib/stomp_server/test_server.rb", "lib/stomp_server/topic_manager.rb", "setup.rb", "test/tesly.rb", "test/test_queue_manager.rb", "test/test_stomp_frame.rb", "test/test_topic_manager.rb", "test_todo/test_stomp_server.rb"]
   s.homepage = %q{    by Patrick Hurley, Lionel Bouton}
   s.rdoc_options = ["--main", "README.txt"]
   s.require_paths = ["lib"]
