@@ -16,6 +16,7 @@ lib/stomp_server/protocols/stomp.rb
 lib/stomp_server/queue.rb
 lib/stomp_server/queue/activerecord_queue.rb
 lib/stomp_server/queue/ar_message.rb
+lib/stomp_server/queue/ar_reconnect.rb
 lib/stomp_server/queue/dbm_queue.rb
 lib/stomp_server/queue/file_queue.rb
 lib/stomp_server/queue/memory_queue.rb
