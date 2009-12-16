@@ -1,5 +1,6 @@
 require 'stomp_server/topic_manager'
 require 'test/unit' unless defined? $ZENTEST and $ZENTEST
+require 'logger'
 
 class TestTopics < Test::Unit::TestCase
 
@@ -20,9 +21,12 @@ class TestTopics < Test::Unit::TestCase
   
   def setup
     @t = StompServer::TopicManager.new
+    @log = Logger.new(STDOUT)
+    @log.level = Logger::DEBUG
   end
     
   def test_subscribe
+    @log.debug("test_subscribe starts")
     u = UserMock.new
     t = 'foo'
     @t.subscribe(t, u)
@@ -35,9 +39,11 @@ class TestTopics < Test::Unit::TestCase
     u.data = ''
     @t.sendmsg(m2)
     assert_equal('', u.data)
+    @log.debug("test_subscribe ends")
   end
 
   def test_unsubscribe
+    @log.debug("test_unsubscribe starts")
     u = UserMock.new
     t = 'foo'
     @t.subscribe(t, u)
@@ -50,9 +56,11 @@ class TestTopics < Test::Unit::TestCase
     u.data = ''
     @t.sendmsg(m1)
     assert_equal('', u.data)        
+    @log.debug("test_unsubscribe ends")
   end
 
   def test_sendmsg(msg)
+    @log.debug("test_sendmsg starts")
     u = UserMock.new
     t = 'foo'
     @t.subscribe(t, u)
@@ -61,6 +69,7 @@ class TestTopics < Test::Unit::TestCase
     @t.sendmsg(m1)
     assert_equal(m1.data, u.data)
     assert_equal('MESSAGE', m1.command)
+    @log.debug("test_sendmsg ends")
   end
 
 end
