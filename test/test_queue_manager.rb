@@ -7,6 +7,7 @@ require 'stomp_server/queue/memory_queue'
 require 'stomp_server/queue/dbm_queue'
 require 'test/unit'
 require 'fileutils'
+require 'logger'
 
 class TestQueues < Test::Unit::TestCase
 
@@ -51,6 +52,8 @@ class TestQueues < Test::Unit::TestCase
     @@qstore = StompServer::FileQueue.new(".queue_test")
     @@qstore.checkpoint_interval=0
     @t = MockQueueManager.new(@@qstore)
+    @log = Logger.new(STDOUT)
+    @log.level = Logger::DEBUG
   end
 
   # def test_subscribe
@@ -69,6 +72,7 @@ class TestQueues < Test::Unit::TestCase
   # end
 
   def test_subscribe2
+    @log.debug("test_subscribe2 starts")
     t = 'sub2'
     m1 = MessageMock.new(t, 'sub2msg')
     @t.sendmsg(m1)
@@ -77,6 +81,7 @@ class TestQueues < Test::Unit::TestCase
     @t.subscribe(t, u)
     
     assert_equal(m1.data, u.data)
+    @log.debug("test_subscribe2 ends")
   end
 
   # def test_unsubscribe
@@ -106,6 +111,7 @@ class TestQueues < Test::Unit::TestCase
   # end
 
   def test_queued_sendmsg
+    @log.debug("test_queued_sendmsg starts")
     t = 'foo'
     m1 = MessageMock.new('foo', 'foomsg')
     @t.sendmsg(m1)
@@ -119,7 +125,6 @@ class TestQueues < Test::Unit::TestCase
     u2 = UserMock.new
     @t.subscribe(t, u2) 
     assert_equal('', u2.data)
+    @log.debug("test_queued_sendmsg ends")
   end
-  
-  
 end
