@@ -1,6 +1,8 @@
+require 'logger'
+$:.unshift File.dirname(__FILE__)
+require 'mocklogger'
 require 'stomp_server/stomp_frame'
 require 'test/unit' unless defined? $ZENTEST and $ZENTEST
-require 'logger'
 
 class TestStompFrame < Test::Unit::TestCase
   def setup

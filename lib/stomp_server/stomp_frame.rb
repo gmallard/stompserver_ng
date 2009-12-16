@@ -6,6 +6,10 @@ class StompFrame
     @command = command
     @headers = headers || {}
     @body = body || ''
+    #
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel
+    @@log.debug("StompFrame initialize comletes")
   end
  
   def to_s

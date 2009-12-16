@@ -7,7 +7,7 @@ echo "Project Home: $PH"
 CONFIG=$PH/test/r19/stompserver.conf
 echo "Using Config: $CONFIG"
 #
-FLAGS="--debug --config=$CONFIG"
+FLAGS="--debug --log_level=debug --config=$CONFIG $*"
 #
 ruby -I $(pwd)/lib bin/stompserver $FLAGS
 #

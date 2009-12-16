@@ -10,14 +10,35 @@ require 'stomp_server/queue/memory_queue'
 require 'stomp_server/queue/file_queue'
 require 'stomp_server/queue/dbm_queue'
 require 'stomp_server/protocols/stomp'
+require 'logger'
 
 module StompServer
   VERSION = '0.9.9.2009082400'
+
+  class LogLevelHandler
+    #
+    def self.set_loglevel(opts)
+      @@loglevel = nil
+      case opts[:loglevel].downcase
+        when 'debug' then @@loglevel = Logger::DEBUG
+        when 'info'  then @@loglevel = Logger::INFO
+        when 'warn'  then @@loglevel = Logger::WARN
+        when 'error' then @@loglevel = Logger::ERROR
+        else  
+          @@loglevel = Logger::ERROR
+      end
+    end
+    #
+    def self.get_loglevel
+      @@loglevel
+    end
+  end
 
   class Configurator
     attr_accessor :opts
 
     def initialize
+
       @opts = nil
       @defaults = {
         :port => 61613,
@@ -30,6 +51,7 @@ module StompServer
         :logdir => 'log',
         :configfile => 'stompserver.conf',
         :logfile => 'stompserver.log',
+        :loglevel => 'error',
         :pidfile => 'stompserver.pid',
         :checkpoint => 0
       }
@@ -37,12 +59,17 @@ module StompServer
       if opts[:debug]
         $DEBUG=true
       end
-
+      puts "Log level: #{opts[:loglevel]}"
+      StompServer::LogLevelHandler.set_loglevel(opts)
+      @@log = Logger.new(STDOUT)
+      @@log.level = StompServer::LogLevelHandler.get_loglevel
+      @@log.debug("Configuration complete")
     end
 
     def getopts
       copts = OptionParser.new
       copts.on("-C", "--config=CONFIGFILE", String, "Configuration File (default: stompserver.conf)") {|c| @defaults[:configfile] = c}
+      copts.on("-l", "--log_level=LEVEL", String, "Logger Level (default: ERROR") {|l| @defaults[:loglevel] = l}
       copts.on("-p", "--port=PORT", Integer, "Change the port (default: 61613)") {|p| @defaults[:port] = p}
       copts.on("-b", "--host=ADDR", String, "Change the host (default: localhost)") {|a| @defaults[:host] = a}
       copts.on("-q", "--queuetype=QUEUETYPE", String, "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| @defaults[:queue] = q}
@@ -81,11 +108,15 @@ module StompServer
     attr_accessor :queue_manager, :auth_required, :stompauth, :topic_manager
 
     def initialize(opts)
+      @@log = Logger.new(STDOUT)
+      @@log.level = StompServer::LogLevelHandler.get_loglevel
+
       @opts = opts
       @queue_manager = nil
       @auth_required = nil
       @stompauth = nil
       @topic_manager = nil
+      @@log.debug("Run initialize complete")
     end
 
     def stop(pidfile)
@@ -144,8 +175,11 @@ module StompServer
         @stompauth = StompServer::StompAuth.new(@opts[:passwd])
       end
 
+      @@log.debug("Run.start complete")
       trap("INT") { puts "INT signal received.";stop(@opts[:pidfile]) }
     end
   end
+#
+
 end
 
