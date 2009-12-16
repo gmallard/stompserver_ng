@@ -59,7 +59,7 @@ class TestTopics < Test::Unit::TestCase
     @log.debug("test_unsubscribe ends")
   end
 
-  def test_sendmsg(msg)
+  def test_sendmsg
     @log.debug("test_sendmsg starts")
     u = UserMock.new
     t = 'foo'
