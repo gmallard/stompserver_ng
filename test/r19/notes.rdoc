@@ -1,0 +1,53 @@
+#
+# = Ruby 1.9.x Testing Activities Log
+#
+# == Assumptions
+#
+# * $PH=project_home_directory
+# * Commands are issued from the project home directory
+# * No attempt is made to support 'tesly' functionality
+#
+# == Server Start
+#
+# * Modify $PH/test/r191/runserver.sh as required
+# * ./test/r19/runserver.sh
+#
+# == Verify/Deny Existing Tests Functionality
+#
+# Verify/deny that the existing tests run.  These are:
+#
+# === $PH/test/test_queue_manager.rb
+#
+# To execute:
+#
+# * ./test/r19/runtest test/test_queue_manager.rb
+#
+# === $PH/test/test_stomp_frame.rb
+#
+# To execute:
+#
+# * ./test/r19/runtest test/test_stomp_frame.rb
+#
+# === $PH/test/test_topic_manager.rb
+#
+# To execute:
+#
+# * ./test/r19/runtest test/test_topic_manager.rb
+#
+# === Results
+#
+# Note: first verify that these actually run under ruby 1.8.  They do.
+#
+# All three of these tests encountered errors with ruby 1.9.
+#
+# * test_queue_manager.rb
+# ** TypeError: can't convert Fixnum into String
+# ** lib/stomp_server/stomp_frame.rb:13:in `include?'
+# * test_stomp_frame.rb
+# ** TypeError: type mismatch: Fixnum given
+# ** lib/stomp_server/stomp_frame.rb:54:in `index'
+# * test_topic_manager.rb
+# ** test_sendmsg(TestTopics):
+# ** ArgumentError: wrong number of arguments (0 for 1)
+#
+
