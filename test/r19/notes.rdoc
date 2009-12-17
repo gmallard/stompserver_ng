@@ -125,5 +125,20 @@
 #
 # * ruby test/test_0001_conn.rb
 #
+# == Informal Client Testing
+#
+# Informal testing using the code at git://github.com/gmallard/stomp-demo.git
+# indicate that the server basically functions using ruby 1.9.1.
+#
+# = Todo List
+#
+# * More unit tests
+# * More documentation
+# * Build gem
+# * Install gem
+# * Full testing using 1.9.0
+# * Full regression testing using 1.8.7
+#
+
 
 
