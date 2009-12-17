@@ -8,7 +8,7 @@
 # dequeue removes a frame from the bottom of the queue and returns it.
 #
 # - requeue(queue name,frame)
-# does the same as enqueue, except it puts the from at the bottom of the queue
+# does the same as enqueue, except it @@log.debug the from at the bottom of the queue
 #
 # The storage class MAY implement the stop() method which can be used to do any housekeeping that needs to be done before 
 # stompserver shuts down. stop() will be called when stompserver is shut down.
@@ -27,7 +27,7 @@ class QueueMonitor
 
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("QueueManager initialize comletes")
+    @@log.debug("QueueMonitor initialize comletes")
 
   end
 
@@ -65,13 +65,17 @@ class QueueManager
   Struct::new('QueueUser', :connection, :ack)
 
   def initialize(qstore)
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel
+    @@log.debug("QueueManager initialize comletes")
+
     @qstore = qstore
     @queues = Hash.new { Array.new }
     @pending = Hash.new
     if $STOMP_SERVER
       monitor = StompServer::QueueMonitor.new(@qstore,@queues)
       monitor.start
-      puts "Queue monitor started" if $DEBUG
+      @@log.debug "Queue monitor started" if $DEBUG
     end
   end
 
@@ -80,7 +84,7 @@ class QueueManager
   end
 
   def subscribe(dest, connection, use_ack=false)
-    puts "Subscribing to #{dest}"
+    @@log.debug "Subscribing to #{dest}"
     user = Struct::QueueUser.new(connection, use_ack)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
@@ -89,14 +93,14 @@ class QueueManager
   # Send at most one frame to a connection
   # used when use_ack == true
   def send_a_backlog(connection)
-    puts "Sending a backlog" if $DEBUG
+    @@log.debug "Sending a backlog" if $DEBUG
     # lookup queues with data for this connection
     possible_queues = @queues.select{ |destination,users|
       @qstore.message_for?(destination) &&
         users.detect{|u| u.connection == connection}
     }
     if possible_queues.empty?
-      puts "Nothing left" if $DEBUG
+      @@log.debug "Nothing left" if $DEBUG
       return
     end
     # Get a random one (avoid artificial priority between queues
@@ -104,12 +108,12 @@ class QueueManager
     dest,users = possible_queues[rand(possible_queues.length)]
     user = users.find{|u| u.connection == connection}
     frame = @qstore.dequeue(dest)
-    puts "Chose #{dest}" if $DEBUG
+    @@log.debug "Chose #{dest}" if $DEBUG
     send_to_user(frame, user)
   end
 
   def send_destination_backlog(dest,user)
-    puts "Sending destination backlog for #{dest}" if $DEBUG
+    @@log.debug "Sending destination backlog for #{dest}" if $DEBUG
     if user.ack
       # only send one message (waiting for ack)
       frame = @qstore.dequeue(dest)
@@ -122,7 +126,7 @@ class QueueManager
   end
 
   def unsubscribe(dest, connection)
-    puts "Unsubscribing from #{dest}"
+    @@log.debug "Unsubscribing from #{dest}"
     @queues.each do |d, queue|
       queue.delete_if { |qu| qu.connection == connection and d == dest}
     end
@@ -130,9 +134,9 @@ class QueueManager
   end
 
   def ack(connection, frame)
-    puts "Acking #{frame.headers['message-id']}" if $DEBUG
+    @@log.debug "Acking #{frame.headers['message-id']}" if $DEBUG
     unless @pending[connection]
-      puts "No message pending for connection!"
+      @@log.debug "No message pending for connection!"
       return
     end
     msgid = frame.headers['message-id']
@@ -142,7 +146,7 @@ class QueueManager
       # (probably a client connecting to a restarted server)
       frame = @pending[connection]
       @qstore.requeue(frame.headers['destination'],frame)
-      puts "Invalid message-id (received #{msgid} != #{p_msgid})"
+      @@log.debug "Invalid message-id (received #{msgid} != #{p_msgid})"
     end
     @pending.delete connection
     # We are free to work now, look if there's something for us
@@ -150,7 +154,7 @@ class QueueManager
   end
 
   def disconnect(connection)
-    puts "Disconnecting"
+    @@log.debug "Disconnecting"
     frame = @pending[connection]
     if frame
       @qstore.requeue(frame.headers['destination'],frame)
@@ -175,7 +179,7 @@ class QueueManager
   def sendmsg(frame)
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
-    puts "Sending a message to #{dest}: "
+    @@log.debug "Sending a message to #{dest}: "
     # Lookup a user willing to handle this destination
     available_users = @queues[dest].reject{|user| @pending[user.connection]}
     if available_users.empty?

@@ -22,7 +22,7 @@ class Queue
     end
 
     @queues.keys.each do |dest|
-      puts "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+      @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
     end
 
     @@log.debug("Queue initialized in #{@directory}")
@@ -34,11 +34,11 @@ class Queue
   end
 
   def stop
-    puts "Shutting down Queue"
+    @@log.debug "Shutting down Queue"
 
     @queues.keys.each {|dest| close_queue(dest)}
     @queues.keys.each do |dest|
-      puts "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+      @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
     end
     save_queue_state
   end
@@ -47,7 +47,7 @@ class Queue
     now=Time.now
     @next_save ||=now
     if now >= @next_save
-      puts "Saving Queue State" if $DEBUG
+      @@log.debug "Saving Queue State" if $DEBUG
       qinfo = {:queues => @queues, :frames => @frames}
       # write then rename to make sure this is atomic
       File.open("#{@directory}/qinfo.new", "wb") { |f| f.write Marshal.dump(qinfo)}
@@ -69,7 +69,7 @@ class Queue
       _close_queue(dest)
       @queues.delete(dest)
       @frames.delete(dest)
-      puts "Queue #{dest} removed." if $DEBUG
+      @@log.debug "Queue #{dest} removed." if $DEBUG
     end
   end
 
@@ -83,7 +83,7 @@ class Queue
     @queues[dest][:dequeued] = 0
     @queues[dest][:exceptions] = 0
     _open_queue(dest)
-    puts "Created queue #{dest}" if $DEBUG
+    @@log.debug "Created queue #{dest}" if $DEBUG
   end
 
   def requeue(dest,frame)
