@@ -6,7 +6,6 @@ class TopicManager
   def initialize
     @frame_index =0
     @topics = Hash.new { Array.new }
-    puts "TopicManager initialized"
 
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogLevelHandler.get_loglevel

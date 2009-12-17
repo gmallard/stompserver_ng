@@ -3,6 +3,10 @@ module StompServer
 class Queue
   attr_accessor :checkpoint_interval
   def initialize(directory='.stompserver', delete_empty=true)
+
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel
+
     @stompid = StompServer::StompId.new
     @delete_empty = delete_empty
     @directory = directory
@@ -21,7 +25,7 @@ class Queue
       puts "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
     end
 
-    puts "Queue initialized in #{@directory}"
+    @@log.debug("Queue initialized in #{@directory}")
 
     # Cleanup dead queues and save the state of the queues every so often.  Alternatively we could save the queue state every X number
     # of frames that are put in the queue.  Should probably also read it after saving it to confirm integrity.

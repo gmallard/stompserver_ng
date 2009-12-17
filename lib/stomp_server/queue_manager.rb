@@ -24,7 +24,11 @@ class QueueMonitor
     @qstore = qstore
     @queues = queues
     @stompid = StompServer::StompId.new
-    puts "QueueManager initialized"
+
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel
+    @@log.debug("QueueManager initialize comletes")
+
   end
 
   def start
