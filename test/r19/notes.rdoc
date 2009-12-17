@@ -60,12 +60,14 @@
 # <b>test_queue_manager</b>
 #
 # * Added logging to the test
-# * To Be Completed
+# * Changes to stomp_frame.rb to properly compare single characters or locate
+# single characters in a string.
 #
 # <b>test_stomp_frame</b>
 #
 # * Added logging to the test
-# * To Be Completed
+# * Changes to stomp_frame.rb to properly compare single characters or locate
+# single characters in a string.
 #
 # <b>test_topic_manager</b>
 #
@@ -96,5 +98,16 @@
 # * Successful test execution under ruby 1.8.
 #
 # This phase of changes was eventually completed.
+#
+# = Existing Tests and Ruby Version Compatability Summary
+#
+# After the work described briefly above, the existing tests function on:
+#
+# * ruby 1.8.7 (2009-06-12 patchlevel 174) [i486-linux]
+# * ruby 1.9.0 (2008-10-04 revision 19669) [i486-linux]
+# * ruby 1.9.1p243 (2009-07-16 revision 24175) [i486-linux]
+#
+# Again, note that these tests do _not_ use a running stompserver, but
+# use mock objects to drive the testing.
 #
 
