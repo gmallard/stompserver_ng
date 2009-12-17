@@ -1,3 +1,7 @@
+require 'logger'
+$:.unshift File.dirname(__FILE__)
+require 'mocklogger'
+#
 require 'stomp_server/stomp_id'
 require 'stomp_server/stomp_frame'
 require 'stomp_server/queue_manager'
@@ -7,7 +11,6 @@ require 'stomp_server/queue/memory_queue'
 require 'stomp_server/queue/dbm_queue'
 require 'test/unit'
 require 'fileutils'
-require 'logger'
 
 class TestQueues < Test::Unit::TestCase
 

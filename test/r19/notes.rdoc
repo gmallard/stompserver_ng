@@ -1,6 +1,9 @@
 #
 # = Ruby 1.9.x Testing Activities Log
 #
+# The reader should absorb this sequentially.  The text is a rough 
+# chronological depiction of events for these activities.
+#
 # == Assumptions
 #
 # * $PH=project_home_directory
@@ -56,17 +59,42 @@
 #
 # <b>test_queue_manager</b>
 #
-# * Added logging
+# * Added logging to the test
 # * To Be Completed
 #
 # <b>test_stomp_frame</b>
 #
-# * Added logging
+# * Added logging to the test
 # * To Be Completed
 #
 # <b>test_topic_manager</b>
 #
-# * Add logging
+# * Added logging to the test
 # * Remove unused and unrequired method parameter
+#
+# -----
+#
+# During the attempt to add robust logging to the server code, it was 
+# eventaully recognized that:
+#
+# * the existing tests do not even requirea stompserver to be running
+# * some experimental but sound logging code broke existing tests with ruby 1.8
+#
+# Why the breakage?  Because the existing tests do not use a running server,
+# instead including portions of server code.
+#
+# This leads to the following sections.
+#
+# = Logging Using Standard Ruby 'logger'
+#
+# Initial attempts to implement this across the framework broke horribly.
+# Additionally, even the existing tests failed under ruby 1.8.
+#
+# The initial goal of this phase was to execute the existing tests with:
+#
+# * Initial changes to the framework required for adding logging.
+# * Successful test execution under ruby 1.8.
+#
+# This phase of changes was eventually completed.
 #
 
