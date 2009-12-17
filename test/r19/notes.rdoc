@@ -110,4 +110,20 @@
 # Again, note that these tests do _not_ use a running stompserver, but
 # use mock objects to drive the testing.
 #
+# = Further Testing
+#
+# This section describes further testing of the stompserver framework.
+#
+# The requirements for running the tests described here are:
+#
+# * a running instance of a stompserver
+# * the server host and port match those specified in <b>probs.yaml</b>
+#
+# == Connect and Disconnect Processing
+#
+# Run the following test:
+#
+# * ruby test/test_0001_conn.rb
+#
+
 
