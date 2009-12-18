@@ -9,7 +9,6 @@ class StompFrame
     #
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("StompFrame initialize comletes")
   end
  
   def to_s
@@ -42,7 +41,6 @@ class StompFrameRecognizer
     #
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("StompFrameRecognizer initialize completes")
   end
   
   def parse_body(len)
