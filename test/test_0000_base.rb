@@ -10,7 +10,13 @@ class Test_0000_Base < Test::Unit::TestCase
   def setup
     @runparms = load_config()
     @conn = nil
+    @client = nil
   end # of setup
+
+  #
+  def test_0000_default
+    assert(true)
+  end
 
   private
   #
@@ -45,6 +51,22 @@ class Test_0000_Base < Test::Unit::TestCase
       }
     end
     @conn = nil
+  end
+  #
+  def make_client()
+    assert_nothing_raised() {
+      @client = Stomp::Client.open(@runparms[:userid],
+        @runparms[:password], 
+        @runparms[:host], 
+        @runparms[:port])
+    }
+  end
+  #
+  def close_client()
+    assert_nothing_raised() {
+      @client.close if @client
+    }
+    @client = nil
   end
 
 end # of class

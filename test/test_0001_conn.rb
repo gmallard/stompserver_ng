@@ -17,10 +17,12 @@ class Test_0001_Conn < Test_0000_Base
   #
   def test_0010_connect
     open_conn()
+    assert_not_nil(@conn, "connection should not be nil")
   end
   #
   def test_0015_disconnect
     disconnect_conn()
+    assert_nil(@conn, "connection should be nil after disconnect")
   end
 end # of class
 
