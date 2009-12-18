@@ -68,6 +68,10 @@ class Test_0000_Base < Test::Unit::TestCase
     }
     @client = nil
   end
+  #
+  def subscribe(qname)
+    @conn.subscribe(qname)
+  end
 
 end # of class
 
