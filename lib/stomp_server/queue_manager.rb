@@ -37,7 +37,7 @@ class QueueMonitor
   end
 
   def monitor(count)
-    return unless @qstore.methods.include?('monitor')
+    return unless (@qstore.methods.include?(:monitor) | @qstore.methods.include?('monitor'))
     users = @queues['/queue/monitor']
     return if users.size == 0
     stats = @qstore.monitor
