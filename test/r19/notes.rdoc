@@ -125,6 +125,18 @@
 #
 # * ruby test/test_0001_conn.rb
 #
+# == Stomp Client Creation
+#
+# Run the following test:
+#
+# * ruby test/test_0006_client.rb
+#
+# == Basic Send / Receive Test
+#
+# Run the following test:
+#
+# * ruby test/test_0011_send_recv.rb
+#
 # == Informal Client Testing
 #
 # Informal testing using the code at git://github.com/gmallard/stomp-demo.git
