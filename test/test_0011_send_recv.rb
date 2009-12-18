@@ -13,7 +13,6 @@ class Test_0011_Send_Recv < Test_0000_Base
     @queue_name = "/queue/sendrecv"
     @test_message = "This is a test message."
     make_client()
-    p @client
   end
 
   #
