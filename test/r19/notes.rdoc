@@ -79,7 +79,7 @@
 # During the attempt to add robust logging to the server code, it was 
 # eventaully recognized that:
 #
-# * the existing tests do not even requirea stompserver to be running
+# * the existing tests do not even require a stompserver to be running
 # * some experimental but sound logging code broke existing tests with ruby 1.8
 #
 # Why the breakage?  Because the existing tests do not use a running server,
