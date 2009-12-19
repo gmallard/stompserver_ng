@@ -4,6 +4,10 @@ class DBMQueue < Queue
 
   def initialize *args
     super
+
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+
     # Please don't use dbm files for storing large frames, it's problematic at best and uses large amounts of memory.
     # sdbm croaks on marshalled data that contains certain characters, so we don't use it at all
     @dbm = false
@@ -16,7 +20,7 @@ class DBMQueue < Queue
       begin
         require dbtype
         @dbm = dbtype
-        puts "#{@dbm} loaded"
+        @@log.info "#{@dbm} loaded"
         break
       rescue LoadError => e
       end
