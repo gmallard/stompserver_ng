@@ -125,6 +125,12 @@
 #
 # * ruby test/test_0001_conn.rb
 #
+# == Connect and Disconnect With Send and Receive
+#
+# Run the following test:
+#
+# * ruby test/test_0002_conn_sr.rb
+#
 # == Stomp Client Creation
 #
 # Run the following test:
@@ -151,6 +157,4 @@
 # * Full testing using 1.9.0
 # * Full regression testing using 1.8.7
 #
-
-
 
