@@ -4,11 +4,15 @@ class MemoryQueue
   attr_accessor :checkpoint_interval
 
   def initialize
+
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+
     @frame_index =0
     @stompid = StompServer::StompId.new
     @stats = Hash.new
     @messages = Hash.new { Array.new }
-    puts "MemoryQueue initialized"
+    @@log.debug "MemoryQueue initialized"
   end
 
   def stop

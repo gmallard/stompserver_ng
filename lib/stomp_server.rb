@@ -55,34 +55,41 @@ module StompServer
         :pidfile => 'stompserver.pid',
         :checkpoint => 0
       }
-      @opts = getopts
+      #
+      @@log = Logger.new(STDOUT)
+      @@log.debug "stomp_server version: #{StompServer::VERSION}"
+
+      @opts = getopts   # get the options
+      @@log.debug "Logger Level Requested: #{@opts[:loglevel].upcase}"
+      StompServer::LogLevelHandler.set_loglevel(@opts)
+      @@log.level = StompServer::LogLevelHandler.get_loglevel()
+      #
       if opts[:debug]
         $DEBUG=true
+        @@log.debug "-d / --debug set, $DEBUG is true"
       end
-      puts "Log level: #{opts[:loglevel]}"
-      StompServer::LogLevelHandler.set_loglevel(opts)
-      @@log = Logger.new(STDOUT)
-      @@log.level = StompServer::LogLevelHandler.get_loglevel
-      @@log.debug("Configuration complete")
+      @@log.info("#{self.class} Configuration complete")
     end
 
     def getopts
       copts = OptionParser.new
+      copts.on("-a", "--auth", String, "Require client authorization") {|a| @defaults[:auth] = true}
+      copts.on("-b", "--host=ADDR", String, "Change the host (default: localhost)") {|a| @defaults[:host] = a}
+      copts.on("-c", "--checkpoint=SECONDS", Integer, "Time between checkpointing the queues in seconds (default: 0)") {|c| @defaults[:checkpoint] = c}
       copts.on("-C", "--config=CONFIGFILE", String, "Configuration File (default: stompserver.conf)") {|c| @defaults[:configfile] = c}
+      copts.on("-d", "--debug", String, "Turn on debug messages") {|d| @defaults[:debug] = true}
       copts.on("-l", "--log_level=LEVEL", String, "Logger Level (default: ERROR") {|l| @defaults[:loglevel] = l}
       copts.on("-p", "--port=PORT", Integer, "Change the port (default: 61613)") {|p| @defaults[:port] = p}
-      copts.on("-b", "--host=ADDR", String, "Change the host (default: localhost)") {|a| @defaults[:host] = a}
       copts.on("-q", "--queuetype=QUEUETYPE", String, "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| @defaults[:queue] = q}
-      copts.on("-w", "--working_dir=DIR", String, "Change the working directory (default: current directory)") {|s| @defaults[:working_dir] = s}
       copts.on("-s", "--storage=DIR", String, "Change the storage directory (default: .stompserver, relative to working_dir)") {|s| @defaults[:storage] = s}
-      copts.on("-d", "--debug", String, "Turn on debug messages") {|d| @defaults[:debug] = true}
-      copts.on("-a", "--auth", String, "Require client authorization") {|a| @defaults[:auth] = true}
-      copts.on("-c", "--checkpoint=SECONDS", Integer, "Time between checkpointing the queues in seconds (default: 0)") {|c| @defaults[:checkpoint] = c}
+      copts.on("-w", "--working_dir=DIR", String, "Change the working directory (default: current directory)") {|s| @defaults[:working_dir] = s}
+      #
       copts.on("-h", "--help", "Show this message") do
         puts copts
         exit
       end
-      puts copts.parse(ARGV)
+
+      copts.parse(ARGV)
 
       if File.exists?(@defaults[:configfile])
         opts = @defaults.merge(YAML.load_file(@defaults[:configfile]))
@@ -109,19 +116,19 @@ module StompServer
 
     def initialize(opts)
       @@log = Logger.new(STDOUT)
-      @@log.level = StompServer::LogLevelHandler.get_loglevel
+      @@log.level = StompServer::LogLevelHandler.get_loglevel()
 
       @opts = opts
       @queue_manager = nil
       @auth_required = nil
       @stompauth = nil
       @topic_manager = nil
-      @@log.debug("Run initialize complete")
+      @@log.info("Run initialize complete")
     end
 
     def stop(pidfile)
       @queue_manager.stop
-      puts "Stompserver shutting down" if $DEBUG
+      @@log.debug "Stompserver #{StompServer::VERSION} shutting down" if $DEBUG
       EventMachine::stop_event_loop
       File.delete(pidfile)
     end
@@ -129,16 +136,16 @@ module StompServer
     def start
       begin
         if @opts[:group]
-          puts "Changing group to #{@opts[:group]}."
+          @@log.debug "Changing group to #{@opts[:group]}."
           Process::GID.change_privilege(Etc.getgrnam(@opts[:group]).gid)
         end
 
         if @opts[:user]
-          puts "Changing user to #{@opts[:user]}."
+          @@log.debug "Changing user to #{@opts[:user]}."
           Process::UID.change_privilege(Etc.getpwnam(@opts[:user]).uid)
         end
       rescue Errno::EPERM
-        puts "FAILED to change user:group #{@opts[:user]}:#{@opts[:group]}: #$!"
+        @@log.error "FAILED to change user:group #{@opts[:user]}:#{@opts[:group]}: #$!"
         exit 1
       end
 
@@ -157,16 +164,20 @@ module StompServer
 
       if @opts[:queue] == 'dbm'
         qstore=StompServer::DBMQueue.new(@opts[:storage])
+        @@log.info "Queue storage is DBM"
       elsif @opts[:queue] == 'file'
         qstore=StompServer::FileQueue.new(@opts[:storage])
+        @@log.info "Queue storage is FILE"
       elsif @opts[:queue] == 'activerecord'
         require 'stomp_server/queue/activerecord_queue'
         qstore=StompServer::ActiveRecordQueue.new(@opts[:etcdir], @opts[:storage])
+        @@log.info "Queue storage is ActiveRecord"
       else
         qstore=StompServer::MemoryQueue.new
+        @@log.info "Queue storage is MEMORY"
       end
       qstore.checkpoint_interval = @opts[:checkpoint]
-      puts "Checkpoing interval is #{qstore.checkpoint_interval}" if $DEBUG
+      @@log.debug "Checkpoing interval is #{qstore.checkpoint_interval}" if $DEBUG
       @topic_manager = StompServer::TopicManager.new
       @queue_manager = StompServer::QueueManager.new(qstore)
       @auth_required = @opts[:auth]
@@ -175,8 +186,8 @@ module StompServer
         @stompauth = StompServer::StompAuth.new(@opts[:passwd])
       end
 
-      @@log.debug("Run.start complete")
-      trap("INT") { puts "INT signal received.";stop(@opts[:pidfile]) }
+      @@log.info("#{self.class}.start setting trap at completion")
+      trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
     end
   end
 #

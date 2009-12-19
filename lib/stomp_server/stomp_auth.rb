@@ -4,6 +4,10 @@ class StompAuth
 attr_accessor :authorized
 
   def initialize(passfile='.passwd')
+
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+
     @passfile = passfile
     @authorized = Hash.new
     if File.exists?(@passfile)
@@ -16,7 +20,7 @@ attr_accessor :authorized
         end
       end
     end
-    puts "Authorized users #{@authorized.keys}" if $DEBUG
+    @@log.debug "Authorized users #{@authorized.keys}" if $DEBUG
   end
 end
 end

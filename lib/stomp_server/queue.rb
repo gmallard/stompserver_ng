@@ -5,7 +5,7 @@ class Queue
   def initialize(directory='.stompserver', delete_empty=true)
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
 
     @stompid = StompServer::StompId.new
     @delete_empty = delete_empty
@@ -25,7 +25,7 @@ class Queue
       @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
     end
 
-    @@log.debug("Queue initialized in #{@directory}")
+    @@log.info("Queue initialized in #{@directory}")
 
     # Cleanup dead queues and save the state of the queues every so often.  Alternatively we could save the queue state every X number
     # of frames that are put in the queue.  Should probably also read it after saving it to confirm integrity.
@@ -106,6 +106,7 @@ class Queue
   def enqueue(dest,frame)
     open_queue(dest) unless @queues.has_key?(dest)
     msgid = assign_id(frame, dest)
+    @@log.debug("Enqueue for message: #{msgid}")
     writeframe(dest,frame,msgid)
     @queues[dest][:frames].push(msgid)
     @frames[dest][msgid] = Hash.new
@@ -122,6 +123,7 @@ class Queue
   def dequeue(dest)
     return false unless message_for?(dest)
     msgid = @queues[dest][:frames].shift
+    @@log.debug("Dequeue for message: #{msgid}")
     frame = readframe(dest,msgid)
     @queues[dest][:size] -= 1
     @queues[dest][:dequeued] += 1

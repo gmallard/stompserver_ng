@@ -7,6 +7,9 @@ class Stomp < EventMachine::Connection
 
   def initialize *args
     super
+    #
+    @@log = Logger.new(STDOUT)
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
   end
 
   def post_init
@@ -21,11 +24,11 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_data(data)
     begin
-      puts "receive_data: #{data.inspect}" if $DEBUG
+      @@log.debug "receive_data: #{data.inspect}" if $DEBUG
       @sfr << data
       process_frames
     rescue Exception => e
-      puts "err: #{e} #{e.backtrace.join("\n")}"
+      @@log.error "err: #{e} #{e.backtrace.join("\n")}"
       send_error(e.to_s)
       close_connection_after_writing
     end
@@ -33,10 +36,10 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_frame(frame)
     begin
-      puts "receive_frame: #{frame.inspect}" if $DEBUG
+      @@log.debug "receive_frame: #{frame.inspect}" if $DEBUG
       process_frame(frame)
     rescue Exception => e
-      puts "err: #{e} #{e.backtrace.join("\n")}"
+      @@log.error "err: #{e} #{e.backtrace.join("\n")}"
       send_error(e.to_s)
       close_connection_after_writing
     end
@@ -80,7 +83,7 @@ class Stomp < EventMachine::Connection
         raise "Invalid Login"
       end
     end
-    puts "Connecting" if $DEBUG
+    @@log.debug "Connecting" if $DEBUG
     response = StompServer::StompFrame.new("CONNECTED", {'session' => 'wow'})
     stomp_send_data(response)
     @connected = true
@@ -142,12 +145,12 @@ class Stomp < EventMachine::Connection
   end
   
   def disconnect(frame)
-    puts "Polite disconnect" if $DEBUG
+    @@log.debug "Polite disconnect" if $DEBUG
     close_connection_after_writing
   end
 
   def unbind
-    p "Unbind called" if $DEBUG
+    @@log.debug "Unbind called" if $DEBUG
     @connected = false
     @@queue_manager.disconnect(self)
     @@topic_manager.disconnect(self)
@@ -172,7 +175,7 @@ class Stomp < EventMachine::Connection
  
   def stomp_send_data(frame)
     send_data(frame.to_s)
-    puts "Sending frame #{frame.to_s}" if $DEBUG
+    @@log.debug "Sending frame #{frame.to_s}" if $DEBUG
   end
 
   def send_frame(command, headers={}, body='')

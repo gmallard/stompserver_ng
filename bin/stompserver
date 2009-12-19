@@ -4,6 +4,7 @@ require 'yaml'
 require 'daemons/daemonize'
 require 'stomp_server'
 require 'optparse'
+require 'logger'
 
 $STOMP_SERVER = true
 
@@ -21,16 +22,17 @@ EventMachine::run do
   stomp = StompServer::Run.new(config.opts)
   stomp.start
 
+  log = Logger.new(STDOUT)
+  log.level = Logger::DEBUG
 
   # Might want to uncomment this if you are sending large files
   #EventMachine::add_periodic_timer 10, proc {GC.start}
   
-  puts "Client authorization enabled" if config.opts[:auth]
-  puts "Debug enabled" if config.opts[:debug]
+  log.debug "Client authorization enabled" if config.opts[:auth]
 
   ## Start protocol handlers
 
-  puts "Stomp protocol handler starting on #{config.opts[:host]} port #{config.opts[:port]}"
+  log.debug "Stomp protocol handler starting on #{config.opts[:host]} port #{config.opts[:port]}"
   EventMachine.start_server(config.opts[:host], config.opts[:port], StompServer::Protocols::Stomp) {|s| s.instance_eval {
       @@auth_required=stomp.auth_required
       @@queue_manager=stomp.queue_manager
@@ -40,7 +42,7 @@ EventMachine::run do
   }
 
   if $HTTP_ENABLE
-    puts "Http protocol handler starting on #{config.opts[:host]} port 8080"
+    log.debug "Http protocol handler starting on #{config.opts[:host]} port 8080"
     EventMachine.start_server(config.opts[:host], 8080, StompServer::Protocols::Http) {|s| s.instance_eval {
         @@auth_required=stomp.auth_required
         @@queue_manager=stomp.queue_manager

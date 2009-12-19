@@ -26,8 +26,8 @@ class QueueMonitor
     @stompid = StompServer::StompId.new
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("QueueMonitor initialize comletes")
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.info("QueueMonitor initialize comletes")
 
   end
 
@@ -66,8 +66,8 @@ class QueueManager
 
   def initialize(qstore)
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("QueueManager initialize comletes")
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.info("QueueManager initialize comletes")
 
     @qstore = qstore
     @queues = Hash.new { Array.new }
@@ -75,7 +75,7 @@ class QueueManager
     if $STOMP_SERVER
       monitor = StompServer::QueueMonitor.new(@qstore,@queues)
       monitor.start
-      @@log.debug "Queue monitor started" if $DEBUG
+      @@log.info "Queue monitor started" if $DEBUG
     end
   end
 
@@ -154,7 +154,7 @@ class QueueManager
   end
 
   def disconnect(connection)
-    @@log.debug "Disconnecting"
+    @@log.warn("Disconnecting")
     frame = @pending[connection]
     if frame
       @qstore.requeue(frame.headers['destination'],frame)
@@ -179,7 +179,6 @@ class QueueManager
   def sendmsg(frame)
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
-    @@log.debug "Sending a message to #{dest}: "
     # Lookup a user willing to handle this destination
     available_users = @queues[dest].reject{|user| @pending[user.connection]}
     if available_users.empty?

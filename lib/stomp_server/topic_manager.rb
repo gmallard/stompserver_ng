@@ -8,8 +8,8 @@ class TopicManager
     @topics = Hash.new { Array.new }
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel
-    @@log.debug("TopicManager initialize comletes")
+    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.info("TopicManager initialize comletes")
 
   end  
 
