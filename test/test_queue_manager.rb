@@ -16,6 +16,7 @@ class TestQueues < Test::Unit::TestCase
 
   class MockQueueManager < StompServer::QueueManager
     def initialize(qstore)
+      super(qstore)
       @qstore = qstore
       @queue_stats = Hash.new
       @queues = Hash.new { Array.new }
