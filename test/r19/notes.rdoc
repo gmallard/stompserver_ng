@@ -150,27 +150,18 @@
 #
 # = Gem Build
 #
-# The author is having some difficulties with this, being a total novice
-# at gems.
+# The gem build process now works, after fixing the _Rakefile_ properly.
 #
 # The _stompserver.gemspec_ file has been updated to use Hoe::spec rather
 # than Hoe::new, per deprecation warnings.
 #
 # To generate a new gemspec file use:
 #
-# * rake debug_gem | sed '/^(/d' > stompserver.gemspec
+# * rake debug_gem > stompserver.gemspec
 #
-# However, after that the command:
+# To generate the gem use:
 #
 # * rake gem
-#
-# fails.  Understanding and fixing this is a todo.
-#
-# A gem _can_ be built successfully with:
-#
-# * gem build stompserver.gemspec
-#
-# That gem can be subsequently installed through normal procedures.
 #
 # == Gem Todo List
 #
@@ -180,7 +171,7 @@
 #
 # * More unit tests
 # * More documentation (in progress)
-# * Build gem (see above)
+# * Build gem (see above) :DONE
 # * Install gem (see above)
 # * Full testing using 1.9.0
 # * Full regression testing using 1.8.7
