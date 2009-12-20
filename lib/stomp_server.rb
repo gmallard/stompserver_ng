@@ -59,6 +59,10 @@ module StompServer
       #
       @@log = Logger.new(STDOUT)
       @@log.debug "stomp_server version: #{StompServer::VERSION}"
+      @@log.debug "ruby: ver=#{RUBY_VERSION}p#{RUBY_PATCHLEVEL} (reldate=#{RUBY_RELEASE_DATE})"
+      if RUBY_VERSION =~ /1.9/
+        @@log.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
+      end
 
       @opts = getopts   # get the options
       @@log.debug "Logger Level Requested: #{@opts[:log_level].upcase}"
@@ -192,12 +196,13 @@ module StompServer
         qstore=StompServer::MemoryQueue.new
         @@log.info "Queue storage is MEMORY"
       end
+
       qstore.checkpoint_interval = @opts[:checkpoint]
-      @@log.debug "Checkpoing interval is #{qstore.checkpoint_interval}" if $DEBUG
+      @@log.debug "Checkpoint interval is #{qstore.checkpoint_interval}" if $DEBUG
       @topic_manager = StompServer::TopicManager.new
       @queue_manager = StompServer::QueueManager.new(qstore)
-      @auth_required = @opts[:auth]
 
+      @auth_required = @opts[:auth]
       if @auth_required
         @stompauth = StompServer::StompAuth.new(@opts[:passwd])
       end
