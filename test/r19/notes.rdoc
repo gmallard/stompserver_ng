@@ -1,43 +1,43 @@
 #
-# = Ruby 1.9.x Testing Activities Log
+# == Ruby 1.9.x Testing Activities Log
 #
 # The reader should absorb this sequentially.  The text is a rough 
 # chronological depiction of events for these activities.
 #
-# == Assumptions
+# === Assumptions
 #
 # * $PH=project_home_directory
 # * Commands are issued from the project home directory
 # * No attempt is made to support 'tesly' functionality
 #
-# == Server Start
+# === Server Start
 #
 # * Modify $PH/test/r191/runserver.sh as required
 # * ./test/r19/runserver.sh
 #
-# == Verify/Deny Existing Tests Functionality
+# === Verify/Deny Existing Tests Functionality
 #
 # Verify/deny that the existing tests run.  These are:
 #
-# === $PH/test/test_queue_manager.rb
+# ==== $PH/test/test_queue_manager.rb
 #
 # To execute:
 #
 # * ./test/r19/runtest test/test_queue_manager.rb
 #
-# === $PH/test/test_stomp_frame.rb
+# ==== $PH/test/test_stomp_frame.rb
 #
 # To execute:
 #
 # * ./test/r19/runtest test/test_stomp_frame.rb
 #
-# === $PH/test/test_topic_manager.rb
+# ==== $PH/test/test_topic_manager.rb
 #
 # To execute:
 #
 # * ./test/r19/runtest test/test_topic_manager.rb
 #
-# === Results
+# ==== Results
 #
 # Note: first verify that these actually run under 
 # ruby 1.8.7 (2009-06-12 patchlevel 174) [i486-linux].  They do.
@@ -55,19 +55,17 @@
 # ** test_sendmsg(TestTopics):
 # ** ArgumentError: wrong number of arguments (0 for 1)
 #
-# === Fixes
+# ==== Fixes
 #
 # <b>test_queue_manager</b>
 #
 # * Added logging to the test
-# * Changes to stomp_frame.rb to properly compare single characters or locate
-# single characters in a string.
+# * Changes to stomp_frame.rb to properly compare single characters or locate single characters in a string.
 #
 # <b>test_stomp_frame</b>
 #
 # * Added logging to the test
-# * Changes to stomp_frame.rb to properly compare single characters or locate
-# single characters in a string.
+# * Changes to stomp_frame.rb to properly compare single characters or locate single characters in a string.
 #
 # <b>test_topic_manager</b>
 #
@@ -80,14 +78,14 @@
 # eventaully recognized that:
 #
 # * the existing tests do not even require a stompserver to be running
-# * some experimental but sound logging code broke existing tests with ruby 1.8
+# * some experimental but sound logging code then broke even existing tests with ruby 1.8
 #
 # Why the breakage?  Because the existing tests do not use a running server,
 # instead including portions of server code.
 #
 # This leads to the following sections.
 #
-# = Logging Using Standard Ruby 'logger'
+# == Logging Using Standard Ruby 'logger'
 #
 # Initial attempts to implement this across the framework broke horribly.
 # Additionally, even the existing tests failed under ruby 1.8.
@@ -99,7 +97,7 @@
 #
 # This phase of changes was eventually completed.
 #
-# = Existing Tests and Ruby Version Compatability Summary
+# == Existing Tests and Ruby Version Compatability Summary
 #
 # After the work described briefly above, the existing tests function on:
 #
@@ -110,45 +108,45 @@
 # Again, note that these tests do _not_ use a running stompserver, but
 # use mock objects to drive the testing.
 #
-# = Further Testing
+# == Further Testing
 #
 # This section describes further testing of the stompserver framework.
 #
 # The requirements for running the tests described here are:
 #
 # * a running instance of a stompserver
-# * the server host and port match those specified in <b>probs.yaml</b>
+# * the server host and port match those specified in <b>props.yaml</b>
 #
-# == Connect and Disconnect Processing
+# === Connect and Disconnect Processing
 #
 # Run the following test:
 #
 # * ruby test/test_0001_conn.rb
 #
-# == Connect and Disconnect With Send and Receive
+# === Connect and Disconnect With Send and Receive
 #
 # Run the following test:
 #
 # * ruby test/test_0002_conn_sr.rb
 #
-# == Stomp Client Creation
+# === Stomp Client Creation
 #
 # Run the following test:
 #
 # * ruby test/test_0006_client.rb
 #
-# == Basic Send / Receive Test
+# === Basic Send / Receive Test
 #
 # Run the following test:
 #
 # * ruby test/test_0011_send_recv.rb
 #
-# == Informal Client Testing
+# === Informal Client Testing
 #
 # Informal testing using the code at git://github.com/gmallard/stomp-demo.git
 # indicate that the server basically functions using ruby 1.9.1.
 #
-# = Gem Build
+# == Gem Build
 #
 # The gem build process now works, after fixing the _Rakefile_ properly.
 #
@@ -163,13 +161,24 @@
 #
 # * rake gem
 #
-# == Gem Todo List
+# === Gem Todo List
 #
-# * Run gem installs on all versions of ruby (currently only done on 1.8.7)
+# Installs on all local ruby versions is complete, with VERSION
+# 0.9.9.2009121900.
 #
-# = Todo List
+# == More Test Information
 #
-# * More unit tests
+# === Tests Which Require a Server
+#
+# * ruby test/ts_all_server.rb
+#
+# === Tests Which No Not Require a Server
+#
+# * ruby test/ts_all_no_server.rb
+#
+# == Todo List
+#
+# * More unit tests (in progress)
 # * More documentation (in progress)
 # * Build gem (see above) :DONE
 # * Install gem (see above)
