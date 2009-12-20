@@ -139,7 +139,8 @@ module StompServer
 
     def stop(pidfile)
       @queue_manager.stop
-      @@log.debug "Stompserver #{StompServer::VERSION} shutting down" if $DEBUG
+      @@log.debug "Stompserver #{StompServer::VERSION} shutting down"
+      STDOUT.flush
       EventMachine::stop_event_loop
       File.delete(pidfile)
     end
