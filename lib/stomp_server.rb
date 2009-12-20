@@ -41,20 +41,20 @@ module StompServer
 
       @opts = nil
       @defaults = {
-        :port => 61613,
-        :host => "127.0.0.1",
-        :daemon => false,
-        :debug => false,
-        :queue => 'memory',
-        :auth => false,
-        :working_dir => Dir.getwd,
-        :storage => ".stompserver",
-        :logdir => 'log',
-        :configfile => 'stompserver.conf',
-        :logfile => 'stompserver.log',
-        :log_level => 'error',
-        :pidfile => 'stompserver.pid',
-        :checkpoint => 0
+        :auth => false,                 # -a
+        :host => "127.0.0.1",           # -b
+        :checkpoint => 0,               # -c
+        :config => 'stompserver.conf',  # -C
+        :debug => false,                # -d
+        :logdir => 'log',               # -D
+        :log_level => 'error',          # -l
+        :logfile => 'stompserver.log',  # -L
+        :port => 61613,                 # -p
+        :pidfile => 'stompserver.pid',  # -P
+        :queue => 'memory',             # -q
+        :storage => ".stompserver",     # -s
+        :working_dir => Dir.getwd,      # -w
+        :daemon => false                # -z
       }
       #
       @@log = Logger.new(STDOUT)
@@ -79,17 +79,78 @@ module StompServer
     def getopts
       opts_parser = OptionParser.new
       hopts = {}
-      opts_parser.on("-a", "--auth", String, "Require client authorization") {|a| hopts[:auth] = true}
-      opts_parser.on("-b", "--host=ADDR", String, "Change the host (default: localhost)") {|a| hopts[:host] = a}
-      opts_parser.on("-c", "--checkpoint=SECONDS", Integer, "Time between checkpointing the queues in seconds (default: 0)") {|c| hopts[:checkpoint] = c}
-      opts_parser.on("-C", "--config=CONFIGFILE", String, "Configuration File (default: stompserver.conf)") {|c| hopts[:configfile] = c}
-      opts_parser.on("-d", "--debug", String, "Turn on debug messages") {|d| hopts[:debug] = true}
-      opts_parser.on("-l", "--log_level=LEVEL", String, "Logger Level (default: ERROR") {|l| hopts[:log_level] = l}
-      opts_parser.on("-p", "--port=PORT", Integer, "Change the port (default: 61613)") {|p| hopts[:port] = p}
-      opts_parser.on("-q", "--queuetype=QUEUETYPE", String, "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| hopts[:queue] = q}
-      opts_parser.on("-s", "--storage=DIR", String, "Change the storage directory (default: .stompserver, relative to working_dir)") {|s| hopts[:storage] = s}
-      opts_parser.on("-w", "--working_dir=DIR", String, "Change the working directory (default: current directory)") {|s| hopts[:working_dir] = s}
-      opts_parser.on("-z", "--daemon", String, "Daemonize server process") {|d| hopts[:daemon] = true}
+
+
+      # :auth
+      opts_parser.on("-a", "--auth", String, 
+        "Require client authorization") {|a| 
+        hopts[:auth] = true}
+
+      # :host
+      opts_parser.on("-b", "--host=ADDR", String, 
+        "Change the host (default: localhost)") {|a| 
+        hopts[:host] = a}
+
+      # :checkpoint
+      opts_parser.on("-c", "--checkpoint=SECONDS", Integer, 
+        "Time between checkpointing the queues in seconds (default: 0)") {|c| 
+        hopts[:checkpoint] = c}
+
+      # :config
+      opts_parser.on("-C", "--config=CONFIGFILE", String, 
+        "Configuration File (default: stompserver.conf)") {|c| 
+        hopts[:config] = c}
+
+      # :debug
+      opts_parser.on("-d", "--debug", String, 
+        "Turn on debug messages") {|d| 
+        hopts[:debug] = true}
+
+      # :logdir
+      opts_parser.on("-D", "--logdir=LOGDIR", String, 
+        "Log file directory  (default: log") {|d| 
+        hopts[:logdir] = d} # new
+
+      # :log_level
+      opts_parser.on("-l", "--log_level=LEVEL", String, 
+        "Logger Level (default: ERROR") {|l| 
+        hopts[:log_level] = l}
+
+      # :logfile
+      opts_parser.on("-L", "--logfile=LOGFILE", String, 
+        "Log file name (default: stompserver.log") {|l| 
+        hopts[:logfile] = l} # new
+
+      # :port
+      opts_parser.on("-p", "--port=PORT", Integer, 
+        "Change the port (default: 61613)") {|p| 
+        hopts[:port] = p}
+
+      # :pidfile
+      opts_parser.on("-P", "--pidfile=PIDFILE", Integer, 
+        "PID file name (default: stompserver.pid)") {|p| 
+        hopts[:pidfile] = p} # new
+
+      # :queue
+      opts_parser.on("-q", "--queuetype=QUEUETYPE", String, 
+        "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| 
+        hopts[:queue] = q}
+
+      # :storage
+      opts_parser.on("-s", "--storage=DIR", String, 
+        "Change the storage directory (default: .stompserver, relative to working_dir)") {|s| 
+        hopts[:storage] = s}
+
+      # :working_dir
+      opts_parser.on("-w", "--working_dir=DIR", String, 
+        "Change the working directory (default: current directory)") {|s| 
+        hopts[:working_dir] = s}
+
+      # :daemon
+      opts_parser.on("-z", "--daemon", String, 
+        "Daemonize server process") {|d| 
+        hopts[:daemon] = true}
+
       #
       opts_parser.on("-h", "--help", "Show this message") do
         puts opts_parser
@@ -99,12 +160,12 @@ module StompServer
       opts_parser.parse(ARGV)
 
       loaded_opts = {}
-      if hopts[:configfile]
-        @@log.debug("Config file is: #{hopts[:configfile]}")
-        loaded_opts = YAML.load_file(hopts[:configfile])
-      elsif File.exists?(@defaults[:configfile])
-        @@log.debug("Config file is: #{@defaults[:configfile]}")
-        loaded_opts = YAML.load_file(@defaults[:configfile])
+      if hopts[:config]
+        @@log.debug("Config file is: #{hopts[:config]}")
+        loaded_opts = YAML.load_file(hopts[:config])
+      elsif File.exists?(@defaults[:config])
+        @@log.debug("Config file is: #{@defaults[:config]}")
+        loaded_opts = YAML.load_file(@defaults[:config])
       else
         @@log.warn("Config file not found")
       end
