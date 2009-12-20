@@ -43,6 +43,7 @@ module StompServer
       @defaults = {
         :port => 61613,
         :host => "127.0.0.1",
+        :daemon => false,
         :debug => false,
         :queue => 'memory',
         :auth => false,
@@ -84,6 +85,7 @@ module StompServer
       opts_parser.on("-q", "--queuetype=QUEUETYPE", String, "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| hopts[:queue] = q}
       opts_parser.on("-s", "--storage=DIR", String, "Change the storage directory (default: .stompserver, relative to working_dir)") {|s| hopts[:storage] = s}
       opts_parser.on("-w", "--working_dir=DIR", String, "Change the working directory (default: current directory)") {|s| hopts[:working_dir] = s}
+      opts_parser.on("-z", "--daemon", String, "Daemonize server process") {|d| hopts[:daemon] = true}
       #
       opts_parser.on("-h", "--help", "Show this message") do
         puts opts_parser
@@ -146,6 +148,7 @@ module StompServer
     end
 
     def start
+      @@log.info("#{self.class}.start begins")
       begin
         if @opts[:group]
           @@log.debug "Changing group to #{@opts[:group]}."
@@ -165,6 +168,7 @@ module StompServer
       Dir.mkdir(@opts[:logdir]) unless File.directory?(@opts[:logdir])
       Dir.mkdir(@opts[:etcdir]) unless File.directory?(@opts[:etcdir])
 
+      @@log.info("#{self.class}.start Daemonize: #{@opts[:daemon]}")
       if @opts[:daemon]
         Daemonize.daemonize(log_file=@opts[:logfile])
         # change back to the original starting directory
