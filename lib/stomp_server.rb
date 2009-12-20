@@ -13,7 +13,7 @@ require 'stomp_server/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '0.9.9.2009082400'
+  VERSION = '0.9.9.2009121900'
 
   class LogLevelHandler
     #

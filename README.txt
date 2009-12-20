@@ -1,7 +1,3 @@
-stompserver
-    by Patrick Hurley, Lionel Bouton
-    http://stompserver.rubyforge.org/
-
 == DESCRIPTION:
 
 Stomp messaging server with file/dbm/memory/activerecord based FIFO

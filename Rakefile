@@ -8,22 +8,19 @@ require 'hoe'
 $LOAD_PATH << "./lib"
 require 'stomp_server'
 
-Hoe.new('stompserver', StompServer::VERSION) do |p|
-  p.rubyforge_name = 'stompserver'
-  p.summary = 'A very light messaging server'
-  p.description = p.paragraphs_of('README.txt', 2..4).join("\n\n")
-  p.url = p.paragraphs_of('README.txt', 0).first.split(/\n/)[1..-1]
-  p.changes = p.paragraphs_of('History.txt', 0..1).join("\n\n")
-  p.email = [ "lionel-dev@bouton.name" ]
-  p.author = [ "Lionel Bouton" ]
-  p.extra_deps = [
-    # This depencency is real, but if you are on a Win32 box
-    # and don't have VC6, it can be a real problem
-    ["daemons", ">= 1.0.2"],
-    ["eventmachine", ">= 0.7.2"],
-    ["hoe", ">= 1.1.1"],
+Hoe.spec('stompserver') do
+  developer("Lionel Bouton", "lionel-dev@bouton.name")
+  rubyforge_name = 'stompserver'
+  summary = 'A very light messaging server'
+  self.description = self.paragraphs_of('README.txt', 2..4).join("\n\n")
+  self.changes = self.paragraphs_of('History.txt', 0..1).join("\n\n")
+  url = 'http://rubyforge.org/projects/stompserver'
+  self.extra_deps = [
+    ["daemons", ">= 1.0.10"],
+    ["eventmachine", ">= 0.12.8"],
+    ["hoe", ">= 2.3.2"],
   ]
-  p.remote_rdoc_dir = ''
+
 end
 
 # vim: syntax=Ruby
