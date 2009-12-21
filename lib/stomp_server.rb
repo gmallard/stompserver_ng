@@ -13,9 +13,14 @@ require 'stomp_server/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '0.9.9.2009121900'
+  VERSION = '0.9.9.2009.12.22.00'
 
+  #
+  # Ruby Logger Level Handler.
+  #
   class LogLevelHandler
+    #
+    # Set the desired logger level.
     #
     def self.set_loglevel(opts)
       @@loglevel = nil
@@ -29,18 +34,47 @@ module StompServer
       end
     end
     #
+    # Return the desired logging level.
+    #
     def self.get_loglevel
       @@loglevel
     end
-  end
+  end # of class LogLevelHandler
 
+  class VersionShower
+    # Display ruby version information on a defined logger output
+    # destination.
+    def self.showversion(logger)
+      # stompserver version
+      logger.debug "stomp_server version: #{StompServer::VERSION}"
+      # ruby version for all versions
+      logger.debug "ruby: ver=#{RUBY_VERSION}p#{RUBY_PATCHLEVEL} (reldate=#{RUBY_RELEASE_DATE})"
+      # more ruby version information for 1.9+
+      if RUBY_VERSION =~ /1.9/
+        logger.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
+      end
+    end
+  end # of class VersionShower
+
+  #
+  # Module level configuration
+  #
   class Configurator
+
+    # The final options, merged from the defaults, the config file, and the 
+    # command line.
+    #--
+    # Should this be 'read' only after construction ????
     attr_accessor :opts
 
     def initialize
 
       @opts = nil
       @defaults = {
+        #
+        # For clarity maintain the same order here as below in the 'getopts' 
+        # method!!!!
+        #
         :auth => false,                 # -a
         :host => "127.0.0.1",           # -b
         :checkpoint => 0,               # -c
@@ -56,30 +90,37 @@ module StompServer
         :working_dir => Dir.getwd,      # -w
         :daemon => false                # -z
       }
-      #
+      # Get a crude logger
       @@log = Logger.new(STDOUT)
-      @@log.debug "stomp_server version: #{StompServer::VERSION}"
-      @@log.debug "ruby: ver=#{RUBY_VERSION}p#{RUBY_PATCHLEVEL} (reldate=#{RUBY_RELEASE_DATE})"
-      if RUBY_VERSION =~ /1.9/
-        @@log.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
-      end
 
-      @opts = getopts   # get the options
+      # Show version numbers regardless
+      StompServer::VersionShower.showversion(@@log)
+
+      # Options handling
+      @opts = getopts()   # get and merge the options
+
+      # Finalize logger level handling
       @@log.debug "Logger Level Requested: #{@opts[:log_level].upcase}"
       StompServer::LogLevelHandler.set_loglevel(@opts)
       @@log.level = StompServer::LogLevelHandler.get_loglevel()
-      #
+
+      # Turn on $DEBUG for extra debugging info if requested
       if opts[:debug]
         $DEBUG=true
         @@log.debug "-d / --debug set, $DEBUG is true"
       end
+
+      # Configuration is complete!
       @@log.info("#{self.class} Configuration complete")
     end
 
-    def getopts
-      opts_parser = OptionParser.new
-      hopts = {}
+    def getopts()
 
+      # New Options Parser
+      opts_parser = OptionParser.new
+
+      # Empty Hash for parser values
+      hopts = {}
 
       # :auth
       opts_parser.on("-a", "--auth", String, 
@@ -151,7 +192,7 @@ module StompServer
         "Daemonize server process") {|d| 
         hopts[:daemon] = true}
 
-      #
+      # Handle help if required
       opts_parser.on("-h", "--help", "Show this message") do
         puts opts_parser
         exit
@@ -159,6 +200,7 @@ module StompServer
 
       opts_parser.parse(ARGV)
 
+      # Handle the config file
       loaded_opts = {}
       if hopts[:config]
         @@log.debug("Config file is: #{hopts[:config]}")
@@ -170,28 +212,36 @@ module StompServer
         @@log.warn("Config file not found")
       end
 
-      opts = {}
-      opts = opts.merge(@defaults)
-      opts = opts.merge(loaded_opts)
-      opts = opts.merge(hopts)
+      # Run basic required merges on all the options
+      opts = {}                         # set to empty
+      opts = opts.merge(@defaults)      # 01 = merge in defaults
+      opts = opts.merge(loaded_opts)    # 02 = merge in loaded from config file
+      opts = opts.merge(hopts)          # 03 = merge in command line options
 
-      opts[:etcdir] = File.join(opts[:working_dir],'etc')
-      opts[:storage] = File.join(opts[:working_dir],opts[:storage])
-      opts[:logdir] = File.join(opts[:working_dir],opts[:logdir])
-      opts[:logfile] = File.join(opts[:logdir],opts[:logfile])
-      opts[:pidfile] = File.join(opts[:logdir],opts[:pidfile])
+      # Last but not least: Miscellaneous file definitions
+      opts[:etcdir] = File.join(opts[:working_dir],'etc')           # Define ':etcdir'
+      opts[:storage] = File.join(opts[:working_dir],opts[:storage]) # Override! ':storage'
+      opts[:logdir] = File.join(opts[:working_dir],opts[:logdir])   # Override! ':logdir'
+      opts[:logfile] = File.join(opts[:logdir],opts[:logfile])      # Override! ':logfile'
+      opts[:pidfile] = File.join(opts[:logdir],opts[:pidfile])      # Override! ':pidfile'
+
+      # Authorization - working file
       if opts[:auth]
         opts[:passwd] = File.join(opts[:etcdir],'.passwd')
       end
-
+      
+      # Return merged values (in Hash)
       return opts
     end
   end
 
-
+  #
+  # Run the server.
+  #
   class Run
     attr_accessor :queue_manager, :auth_required, :stompauth, :topic_manager
 
+    # Intiialize
     def initialize(opts)
       @@log = Logger.new(STDOUT)
       @@log.level = StompServer::LogLevelHandler.get_loglevel()
@@ -204,6 +254,7 @@ module StompServer
       @@log.info("Run initialize complete")
     end
 
+    # Server stop on SIGINT
     def stop(pidfile)
       @queue_manager.stop
       @@log.debug "Stompserver #{StompServer::VERSION} shutting down"
@@ -212,8 +263,12 @@ module StompServer
       File.delete(pidfile)
     end
 
+    # Startup
     def start
       @@log.info("#{self.class}.start begins")
+
+      # Handle group priviliges!
+      # N.B.: Handle these options from the command line ?????????
       begin
         if @opts[:group]
           @@log.debug "Changing group to #{@opts[:group]}."
@@ -229,20 +284,15 @@ module StompServer
         exit 1
       end
 
+      # Make required directories unless they already exist
       Dir.mkdir(@opts[:working_dir]) unless File.directory?(@opts[:working_dir])
       Dir.mkdir(@opts[:logdir]) unless File.directory?(@opts[:logdir])
       Dir.mkdir(@opts[:etcdir]) unless File.directory?(@opts[:etcdir])
 
-      @@log.info("#{self.class}.start Daemonize: #{@opts[:daemon]}")
-      if @opts[:daemon]
-        Daemonize.daemonize(log_file=@opts[:logfile])
-        # change back to the original starting directory
-        Dir.chdir(@opts[:working_dir])
-      end
-
       # Write pidfile
       open(@opts[:pidfile],"w") {|f| f.write(Process.pid) }
 
+      # Determine qstore type
       if @opts[:queue] == 'dbm'
         qstore=StompServer::DBMQueue.new(@opts[:storage])
         @@log.info "Queue storage is DBM"
@@ -258,21 +308,39 @@ module StompServer
         @@log.info "Queue storage is MEMORY"
       end
 
+      # Set checkpoint interval
       qstore.checkpoint_interval = @opts[:checkpoint]
       @@log.debug "Checkpoint interval is #{qstore.checkpoint_interval}" if $DEBUG
       @topic_manager = StompServer::TopicManager.new
       @queue_manager = StompServer::QueueManager.new(qstore)
 
+      # Authorization: requirement
       @auth_required = @opts[:auth]
       if @auth_required
         @stompauth = StompServer::StompAuth.new(@opts[:passwd])
       end
 
+      # If we are going to daemonize, it should be about the last
+      # thing we do here.
+      @@log.info("#{self.class}.start Daemonize: #{@opts[:daemon]}")
+      if @opts[:daemon]
+        @@log.debug("#{self.class}.start going to background")
+        @@log.debug("#{self.class}.start check #{@opts[:logfile]}")
+
+        StompServer::VersionShower.showversion(@@log)
+
+        STDOUT.flush    # clear the decks
+        Daemonize.daemonize(log_file=@opts[:logfile])
+        # change back to the original starting directory
+        Dir.chdir(@opts[:working_dir])
+      end
+
+      # OK, so no daemon: log and set the SIGINT signal handler.
       @@log.info("#{self.class}.start setting trap at completion")
+      StompServer::VersionShower.showversion(@@log) # one more time at startup
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
     end
-  end
+  end # of class Run
 #
-
-end
+end # of module StompServer
 
