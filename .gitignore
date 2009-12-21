@@ -3,4 +3,7 @@
 temp*
 *.patch
 pkg*
+#
+doc/
+html/
 
