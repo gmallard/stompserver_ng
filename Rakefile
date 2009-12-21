@@ -23,7 +23,7 @@ Hoe.spec('stompserver') do
   self.url = 'http://rubyforge.org/projects/stompserver'
   self.extra_deps = [
     ["daemons", ">= 1.0.10"],
-    ["eventmachine", ">= 0.12.8"],
+    ["eventmachine", ">= 0.12.10"],
     ["hoe", ">= 2.3.2"],
   ]
 

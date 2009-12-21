@@ -164,7 +164,7 @@
 # === Gem Todo List
 #
 # Installs on all local ruby versions is complete, with VERSION
-# 0.9.9.2009121900.
+# 0.9.9.2009.12.21.00.
 #
 # == More Test Information
 #
@@ -185,4 +185,9 @@
 # * Full testing using 1.9.0
 # * Full regression testing using 1.8.7
 #
+# == Required Gems
+#
+# The eventmachine dependency is now increased to 0.12.0.
+#
+
 
