@@ -6,7 +6,7 @@ class MemoryQueue
   def initialize
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
 
     @frame_index =0
     @stompid = StompServer::StompId.new

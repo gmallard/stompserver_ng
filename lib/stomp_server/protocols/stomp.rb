@@ -9,7 +9,7 @@ class Stomp < EventMachine::Connection
     super
     #
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
   end
 
   def post_init

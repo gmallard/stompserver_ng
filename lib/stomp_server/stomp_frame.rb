@@ -8,7 +8,7 @@ class StompFrame
     @body = body || ''
     #
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
   end
  
   def to_s
@@ -40,7 +40,7 @@ class StompFrameRecognizer
     @frames = []
     #
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel
+    @@log.level = StompServer::LogHelper.get_loglevel
   end
   
   def parse_body(len)

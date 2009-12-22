@@ -5,7 +5,7 @@ class Queue
   def initialize(directory='.stompserver', delete_empty=true)
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
 
     @stompid = StompServer::StompId.new
     @delete_empty = delete_empty

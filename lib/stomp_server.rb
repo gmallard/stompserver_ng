@@ -18,7 +18,7 @@ module StompServer
   #
   # Ruby Logger Level Handler.
   #
-  class LogLevelHandler
+  class LogHelper
     #
     # Set the desired logger level.
     #
@@ -39,9 +39,6 @@ module StompServer
     def self.get_loglevel
       @@loglevel
     end
-  end # of class LogLevelHandler
-
-  class VersionShower
     # Display ruby version information on a defined logger output
     # destination.
     def self.showversion(logger)
@@ -54,8 +51,7 @@ module StompServer
         logger.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
       end
     end
-  end # of class VersionShower
-
+  end # of class LogHelper
   #
   # Module level configuration
   #
@@ -94,15 +90,15 @@ module StompServer
       @@log = Logger.new(STDOUT)
 
       # Show version numbers regardless
-      StompServer::VersionShower.showversion(@@log)
+      StompServer::LogHelper.showversion(@@log)
 
       # Options handling
       @opts = getopts()   # get and merge the options
 
       # Finalize logger level handling
       @@log.debug "Logger Level Requested: #{@opts[:log_level].upcase}"
-      StompServer::LogLevelHandler.set_loglevel(@opts)
-      @@log.level = StompServer::LogLevelHandler.get_loglevel()
+      StompServer::LogHelper.set_loglevel(@opts)
+      @@log.level = StompServer::LogHelper.get_loglevel()
 
       # Turn on $DEBUG for extra debugging info if requested
       if opts[:debug]
@@ -244,7 +240,7 @@ module StompServer
     # Intiialize
     def initialize(opts)
       @@log = Logger.new(STDOUT)
-      @@log.level = StompServer::LogLevelHandler.get_loglevel()
+      @@log.level = StompServer::LogHelper.get_loglevel()
 
       @opts = opts
       @queue_manager = nil
@@ -327,7 +323,7 @@ module StompServer
         @@log.debug("#{self.class}.start going to background")
         @@log.debug("#{self.class}.start check #{@opts[:logfile]}")
 
-        StompServer::VersionShower.showversion(@@log)
+        StompServer::LogHelper.showversion(@@log)
 
         STDOUT.flush    # clear the decks
         Daemonize.daemonize(log_file=@opts[:logfile])
@@ -337,7 +333,7 @@ module StompServer
 
       # OK, so no daemon: log and set the SIGINT signal handler.
       @@log.info("#{self.class}.start setting trap at completion")
-      StompServer::VersionShower.showversion(@@log) # one more time at startup
+      StompServer::LogHelper.showversion(@@log) # one more time at startup
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
     end
   end # of class Run

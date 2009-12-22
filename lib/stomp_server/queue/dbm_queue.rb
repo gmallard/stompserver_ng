@@ -6,7 +6,7 @@ class DBMQueue < Queue
     super
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
 
     # Please don't use dbm files for storing large frames, it's problematic at best and uses large amounts of memory.
     # sdbm croaks on marshalled data that contains certain characters, so we don't use it at all

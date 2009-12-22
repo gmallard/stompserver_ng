@@ -6,7 +6,7 @@ attr_accessor :authorized
   def initialize(passfile='.passwd')
 
     @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogLevelHandler.get_loglevel()
+    @@log.level = StompServer::LogHelper.get_loglevel()
 
     @passfile = passfile
     @authorized = Hash.new
