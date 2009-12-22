@@ -39,8 +39,10 @@ module StompServer
     def self.get_loglevel
       @@loglevel
     end
+    #
     # Display ruby version information on a defined logger output
     # destination.
+    #
     def self.showversion(logger)
       # stompserver version
       logger.debug "stomp_server version: #{StompServer::VERSION}"
@@ -50,6 +52,16 @@ module StompServer
       if RUBY_VERSION =~ /1.9/
         logger.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
       end
+    end
+    #
+    # Clean logging of all options values.
+    #
+    def self.showoptions(logger, opts)
+      logger.debug("Options Display Starts")
+      opts.keys.sort.each do |optname|
+        logger.debug("Option: #{optname}=#{opts[optname]}")
+      end
+      logger.debug("Options Display Ends")
     end
   end # of class LogHelper
   #
@@ -334,6 +346,7 @@ module StompServer
       # OK, so no daemon: log and set the SIGINT signal handler.
       @@log.info("#{self.class}.start setting trap at completion")
       StompServer::LogHelper.showversion(@@log) # one more time at startup
+      StompServer::LogHelper.showoptions(@@log, @opts) # Dump runtime options
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
     end
   end # of class Run
