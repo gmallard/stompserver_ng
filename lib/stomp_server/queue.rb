@@ -106,7 +106,7 @@ class Queue
   def enqueue(dest,frame)
     open_queue(dest) unless @queues.has_key?(dest)
     msgid = assign_id(frame, dest)
-    @@log.debug("Enqueue for message: #{msgid}")
+    @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
     writeframe(dest,frame,msgid)
     @queues[dest][:frames].push(msgid)
     @frames[dest][msgid] = Hash.new
@@ -123,8 +123,8 @@ class Queue
   def dequeue(dest)
     return false unless message_for?(dest)
     msgid = @queues[dest][:frames].shift
-    @@log.debug("Dequeue for message: #{msgid}")
     frame = readframe(dest,msgid)
+    @@log.debug("Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
     @queues[dest][:size] -= 1
     @queues[dest][:dequeued] += 1
     @queues[dest].delete(msgid)
