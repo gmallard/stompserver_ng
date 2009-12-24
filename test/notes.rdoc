@@ -12,8 +12,8 @@
 #
 # === Server Start
 #
-# * Modify $PH/test/r191/runserver.sh as required
-# * ./test/r19/runserver.sh
+# * Modify $PH/test/runserver.sh as required
+# * ./test/runserver.sh
 #
 # === Verify/Deny Existing Tests Functionality
 #
@@ -21,21 +21,24 @@
 #
 # ==== $PH/test/test_queue_manager.rb
 #
-# To execute:
+# To execute use one of these commands:
 #
-# * ./test/r19/runtest test/test_queue_manager.rb
+# * ./test/runtest.sh test/test_queue_manager.rb
+# * ruby -I $(pwd)/lib test/test_queue_manager.rb
 #
 # ==== $PH/test/test_stomp_frame.rb
 #
-# To execute:
+# To execute use one of these commands:
 #
-# * ./test/r19/runtest test/test_stomp_frame.rb
+# * ./test/runtest.sh test/test_stomp_frame.rb
+# * ruby -I $(pwd)/lib test/test_stomp_frame.rb
 #
 # ==== $PH/test/test_topic_manager.rb
 #
-# To execute:
+# To execute use one of these commands:
 #
-# * ./test/r19/runtest test/test_topic_manager.rb
+# * ./test/runtest.sh test/test_topic_manager.rb
+# * ruby -I $(pwd)/lib test/test_topic_manager.rb
 #
 # ==== Results
 #
@@ -174,16 +177,21 @@
 #
 # === Tests Which No Not Require a Server
 #
-# * ruby test/ts_all_no_server.rb
+# When running these tests it is <b>important</b> to use the 
+# '-I $(pwd)/lib' ruby parameter.  This insures that local code
+# only will be used for the tests.
+#
+# * ruby -I $(pwd)/lib test/ts_all_no_server.rb
 #
 # == Todo List
 #
 # * More unit tests (in progress)
 # * More documentation (in progress)
 # * Build gem (see above) :DONE
-# * Install gem (see above)
-# * Full testing using 1.9.0
-# * Full regression testing using 1.8.7
+# * Install gem (see above) :DONE
+# * Full testing using 1.9.0 (mostly done)
+# * Full regression testing using 1.8.7 (mostly done)
+# * Everyting with the HTTP protocol handler.
 #
 # == Required Gems
 #

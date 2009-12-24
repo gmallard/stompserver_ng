@@ -5,7 +5,7 @@ set -x
 PH=$(pwd)
 echo "Project Home: $PH"
 mtype=${QMEM:-.file}
-CONFIG=$PH/test/r19/stompserver${mtype}.conf
+CONFIG=$PH/test/stompserver${mtype}.conf
 echo "Using Config: $CONFIG"
 #
 FLAGS="--debug --log_level=debug --config=$CONFIG $*"
