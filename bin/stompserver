@@ -34,14 +34,16 @@ EventMachine::run do
   ## Start protocol handlers
 
   log.debug "Stomp protocol handler starting on #{config.opts[:host]} port #{config.opts[:port]}"
-  EventMachine.start_server(config.opts[:host], config.opts[:port], StompServer::Protocols::Stomp) {|s| s.instance_eval {
-      @@auth_required=stomp.auth_required
-      @@queue_manager=stomp.queue_manager
-      @@topic_manager=stomp.topic_manager
-      @@stompauth = stomp.stompauth
+  EventMachine.start_server(config.opts[:host], 
+      config.opts[:port], 
+      StompServer::Protocols::Stomp, 
+        stomp.auth_required,    # *args: arg[0] 
+        stomp.queue_manager,    # *args: arg[1] 
+        stomp.topic_manager,    # *args: arg[2] 
+        stomp.stompauth) {      # *args: arg[3] 
     }
-  }
 
+  # TODO: any http testing and protocol handler changes required.
   if $HTTP_ENABLE
     log.debug "Http protocol handler starting on #{config.opts[:host]} port 8080"
     EventMachine.start_server(config.opts[:host], 8080, StompServer::Protocols::Http) {|s| s.instance_eval {

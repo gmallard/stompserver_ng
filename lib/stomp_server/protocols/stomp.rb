@@ -10,12 +10,20 @@ class Stomp < EventMachine::Connection
     #
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogHelper.get_loglevel()
+    # Arguments are passed from EventMachine::start_server
+    @@auth_required = args[0]
+    @@queue_manager = args[1]
+    @@topic_manager = args[2]
+    @@stompauth =     args[3]
+    #
+    @@log.debug("#{self.class} protocol initialize complete") if $DEBUG
   end
 
   def post_init
     @sfr = StompServer::StompFrameRecognizer.new
     @transactions = {}
     @connected = false
+    @@log.debug("#{self.class} protocol post_init complete") if $DEBUG
   end
 
   def receive_data(data)

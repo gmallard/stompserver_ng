@@ -259,7 +259,7 @@ module StompServer
       @auth_required = nil
       @stompauth = nil
       @topic_manager = nil
-      @@log.info("Run initialize complete")
+      @@log.info("#{self.class} Run class initialize complete")
     end
 
     # Server stop on SIGINT
@@ -319,8 +319,13 @@ module StompServer
       # Set checkpoint interval
       qstore.checkpoint_interval = @opts[:checkpoint]
       @@log.debug "Checkpoint interval is #{qstore.checkpoint_interval}" if $DEBUG
+
+      #
       @topic_manager = StompServer::TopicManager.new
       @queue_manager = StompServer::QueueManager.new(qstore)
+      @@log.debug("Managers are initialized.")
+      @@log.debug("Topic Manager: #{@topic_manager}")
+      @@log.debug("Queue Manager: #{@queue_manager}")
 
       # Authorization: requirement
       @auth_required = @opts[:auth]
