@@ -58,8 +58,16 @@ module StompServer
     #
     def self.showoptions(logger, opts)
       logger.debug("Options Display Starts")
-      opts.keys.sort.each do |optname|
-        logger.debug("Option: #{optname}=#{opts[optname]}")
+      # This is ugly, but it should only happen once at startup ......
+      if RUBY_VERSION =~ /1.8/
+        opts.keys.map {|key| key.to_s}.sort.each do |str_opt|
+          optname = str_opt.to_sym
+          logger.debug("Option: #{optname}=#{opts[optname]}")
+        end
+      else  # 1.9 version
+        opts.keys.sort.each do |optname|
+          logger.debug("Option: #{optname}=#{opts[optname]}")
+        end
       end
       logger.debug("Options Display Ends")
     end
