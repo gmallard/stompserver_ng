@@ -8,7 +8,7 @@ mtype=${QMEM:-.file}
 CONFIG=$PH/test/stompserver${mtype}.conf
 echo "Using Config: $CONFIG"
 #
-FLAGS="--debug --log_level=debug --config=$CONFIG $*"
+FLAGS="--log_level=debug --config=$CONFIG $*"
 #
 ruby -I $(pwd)/lib bin/stompserver $FLAGS
 #
