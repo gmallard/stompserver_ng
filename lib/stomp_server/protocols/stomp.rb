@@ -5,6 +5,7 @@ VALID_COMMANDS = [:connect, :send, :subscribe, :unsubscribe, :begin, :commit, :a
 
 class Stomp < EventMachine::Connection
 
+  # Protocol handler initialization
   def initialize *args
     super
     #
@@ -16,14 +17,15 @@ class Stomp < EventMachine::Connection
     @@topic_manager = args[2]
     @@stompauth =     args[3]
     #
-    @@log.debug("#{self.class} protocol initialize complete") if $DEBUG
+    @@log.debug("#{self} protocol initialize complete") if $DEBUG
   end
 
+  # Protocol handler post initialization
   def post_init
     @sfr = StompServer::StompFrameRecognizer.new
     @transactions = {}
     @connected = false
-    @@log.debug("#{self.class} protocol post_init complete") if $DEBUG
+    @@log.debug("#{self} protocol post_init complete") if $DEBUG
   end
 
   def receive_data(data)
@@ -32,11 +34,11 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_data(data)
     begin
-      @@log.debug "receive_data: #{data.inspect}" if $DEBUG
+      @@log.debug "#{self} receive_data: #{data.inspect}" if $DEBUG
       @sfr << data
       process_frames
     rescue Exception => e
-      @@log.error "err: #{e} #{e.backtrace.join("\n")}"
+      @@log.error "#{self} err: #{e} #{e.backtrace.join("\n")}"
       send_error(e.to_s)
       close_connection_after_writing
     end
@@ -44,10 +46,10 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_frame(frame)
     begin
-      @@log.debug "receive_frame: #{frame.inspect}" if $DEBUG
+      @@log.debug "#{self} receive_frame: #{frame.inspect}" if $DEBUG
       process_frame(frame)
     rescue Exception => e
-      @@log.error "err: #{e} #{e.backtrace.join("\n")}"
+      @@log.error "#{self} err: #{e} #{e.backtrace.join("\n")}"
       send_error(e.to_s)
       close_connection_after_writing
     end
@@ -91,7 +93,7 @@ class Stomp < EventMachine::Connection
         raise "Invalid Login"
       end
     end
-    @@log.debug "Connecting" if $DEBUG
+    @@log.debug "#{self} Connecting" if $DEBUG
     response = StompServer::StompFrame.new("CONNECTED", {'session' => 'wow'})
     stomp_send_data(response)
     @connected = true
@@ -153,12 +155,12 @@ class Stomp < EventMachine::Connection
   end
   
   def disconnect(frame)
-    @@log.debug "Polite disconnect" if $DEBUG
+    @@log.debug "#{self} Polite disconnect" if $DEBUG
     close_connection_after_writing
   end
 
   def unbind
-    @@log.debug "Unbind called" if $DEBUG
+    @@log.debug "#{self} Unbind called" if $DEBUG
     @connected = false
     @@queue_manager.disconnect(self)
     @@topic_manager.disconnect(self)
@@ -183,7 +185,7 @@ class Stomp < EventMachine::Connection
  
   def stomp_send_data(frame)
     send_data(frame.to_s)
-    @@log.debug "Sending frame #{frame.to_s}" if $DEBUG
+    @@log.debug "#{self} Sending frame #{frame.to_s}" if $DEBUG
   end
 
   def send_frame(command, headers={}, body='')
@@ -195,3 +197,4 @@ end
 
 end
 end
+
