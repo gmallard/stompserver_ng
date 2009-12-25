@@ -17,7 +17,7 @@ class Stomp < EventMachine::Connection
     @@topic_manager = args[2]
     @@stompauth =     args[3]
     #
-    @@log.debug("#{self} protocol initialize complete") if $DEBUG
+    @@log.debug("#{self} protocol initialize complete")
   end
 
   # Protocol handler post initialization
@@ -25,7 +25,7 @@ class Stomp < EventMachine::Connection
     @sfr = StompServer::StompFrameRecognizer.new
     @transactions = {}
     @connected = false
-    @@log.debug("#{self} protocol post_init complete") if $DEBUG
+    @@log.debug("#{self} protocol post_init complete")
   end
 
   def receive_data(data)
@@ -34,7 +34,7 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_data(data)
     begin
-      @@log.debug "#{self} receive_data: #{data.inspect}" if $DEBUG
+      @@log.debug "#{self} receive_data: #{data.inspect}"
       @sfr << data
       process_frames
     rescue Exception => e
@@ -46,7 +46,7 @@ class Stomp < EventMachine::Connection
  
   def stomp_receive_frame(frame)
     begin
-      @@log.debug "#{self} receive_frame: #{frame.inspect}" if $DEBUG
+      @@log.debug "#{self} receive_frame: #{frame.inspect}"
       process_frame(frame)
     rescue Exception => e
       @@log.error "#{self} err: #{e} #{e.backtrace.join("\n")}"
@@ -62,8 +62,8 @@ class Stomp < EventMachine::Connection
   
   def process_frame(frame)
     cmd = frame.command.downcase.to_sym
-    raise "Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
-    raise "Not connected" if !@connected && cmd != :connect
+    raise "#{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
+    raise "#{self} Not connected" if !@connected && cmd != :connect
 
     # I really like this code, but my needs are a little trickier
     # 
@@ -82,7 +82,7 @@ class Stomp < EventMachine::Connection
     if [:begin, :commit, :abort].include?(cmd)
       send(cmd, frame, trans)
     else
-      raise "transaction does not exist" unless @transactions.has_key?(trans)
+      raise "#{self} transaction does not exist" unless @transactions.has_key?(trans)
       @transactions[trans] << frame
     end    
   end
@@ -90,10 +90,10 @@ class Stomp < EventMachine::Connection
   def connect(frame)
     if @@auth_required
       unless frame.headers['login'] and frame.headers['passcode'] and  @@stompauth.authorized[frame.headers['login']] == frame.headers['passcode']
-        raise "Invalid Login"
+        raise "#{self} Invalid Login"
       end
     end
-    @@log.debug "#{self} Connecting" if $DEBUG
+    @@log.debug "#{self} Connecting"
     response = StompServer::StompFrame.new("CONNECTED", {'session' => 'wow'})
     stomp_send_data(response)
     @connected = true
@@ -128,14 +128,14 @@ class Stomp < EventMachine::Connection
   end
   
   def begin(frame, trans=nil)
-    raise "Missing transaction" unless trans
-    raise "transaction exists" if @transactions.has_key?(trans)
+    raise "#{self} Missing transaction" unless trans
+    raise "#{self} transaction exists" if @transactions.has_key?(trans)
     @transactions[trans] = []
   end
   
   def commit(frame, trans=nil)
-    raise "Missing transaction" unless trans
-    raise "transaction does not exist" unless @transactions.has_key?(trans)
+    raise "#{self} Missing transaction" unless trans
+    raise "#{self} transaction does not exist" unless @transactions.has_key?(trans)
     
     (@transactions[trans]).each do |frame|
       frame.headers.delete('transaction')
@@ -145,8 +145,8 @@ class Stomp < EventMachine::Connection
   end
   
   def abort(frame, trans=nil)
-    raise "Missing transaction" unless trans
-    raise "transaction does not exist" unless @transactions.has_key?(trans)
+    raise "#{self} Missing transaction" unless trans
+    raise "#{self} transaction does not exist" unless @transactions.has_key?(trans)
     @transactions.delete(trans)
   end
   
@@ -155,12 +155,12 @@ class Stomp < EventMachine::Connection
   end
   
   def disconnect(frame)
-    @@log.debug "#{self} Polite disconnect" if $DEBUG
+    @@log.debug "#{self} Polite disconnect"
     close_connection_after_writing
   end
 
   def unbind
-    @@log.debug "#{self} Unbind called" if $DEBUG
+    @@log.debug "#{self} Unbind called"
     @connected = false
     @@queue_manager.disconnect(self)
     @@topic_manager.disconnect(self)
@@ -185,7 +185,7 @@ class Stomp < EventMachine::Connection
  
   def stomp_send_data(frame)
     send_data(frame.to_s)
-    @@log.debug "#{self} Sending frame #{frame.to_s}" if $DEBUG
+    @@log.debug "#{self} Sending frame #{frame.to_s}"
   end
 
   def send_frame(command, headers={}, body='')
