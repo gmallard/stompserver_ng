@@ -13,7 +13,7 @@ require 'stomp_server/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '0.9.9.2009.12.21.00'
+  VERSION = '0.9.9.2009.12.25.00'
 
   #
   # Ruby Logger Level Handler.

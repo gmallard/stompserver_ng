@@ -1,3 +1,11 @@
+== 0.9.9.2009.12.25.00 / 25 Dec 2009
+
+* Consolidate start messaging to a single class
+* Log all runtime values
+* Eliminate r19 subdirectory artifacts 
+* Remove -d / --debug as the default for the test server
+* Remove references to $DEBUG in the protocol handler
+
 == 0.9.9.2009.12.21.00 / 21 Dec 2009
 
 * Fix 1.9.0 compatability issues
