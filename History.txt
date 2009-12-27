@@ -1,3 +1,8 @@
+== 0.9.9.2009.12.27.00 / 27 Dec 2009
+
+* Add session ID management
+* Refactor stomp protocol class code
+
 == 0.9.9.2009.12.25.00 / 25 Dec 2009
 
 * Consolidate start messaging to a single class

@@ -25,6 +25,7 @@ Hoe.spec('stompserver') do
     ["daemons", ">= 1.0.10"],
     ["eventmachine", ">= 0.12.10"],
     ["hoe", ">= 2.3.2"],
+    ["uuid", ">= 2.1.0"],
   ]
 
 end

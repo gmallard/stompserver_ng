@@ -3,11 +3,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{stompserver}
-  s.version = "0.9.9.2009.12.25.00"
+  s.version = "0.9.9.2009.12.27.00"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Patrick Hurley", "Lionel Bouton", "snacktime", "gyver", "Mike Mangino", "robl", "Guy Allard"]
-  s.date = %q{2009-12-25}
+  s.date = %q{2009-12-27}
   s.default_executable = %q{stompserver}
   s.description = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO
 queues, queue monitoring, and basic authentication.}
@@ -31,17 +31,20 @@ queues, queue monitoring, and basic authentication.}
       s.add_runtime_dependency(%q<daemons>, [">= 1.0.10"])
       s.add_runtime_dependency(%q<eventmachine>, [">= 0.12.10"])
       s.add_runtime_dependency(%q<hoe>, [">= 2.3.2"])
+      s.add_runtime_dependency(%q<uuid>, [">= 2.1.0"])
       s.add_development_dependency(%q<hoe>, [">= 2.3.2"])
     else
       s.add_dependency(%q<daemons>, [">= 1.0.10"])
       s.add_dependency(%q<eventmachine>, [">= 0.12.10"])
       s.add_dependency(%q<hoe>, [">= 2.3.2"])
+      s.add_dependency(%q<uuid>, [">= 2.1.0"])
       s.add_dependency(%q<hoe>, [">= 2.3.2"])
     end
   else
     s.add_dependency(%q<daemons>, [">= 1.0.10"])
     s.add_dependency(%q<eventmachine>, [">= 0.12.10"])
     s.add_dependency(%q<hoe>, [">= 2.3.2"])
+    s.add_dependency(%q<uuid>, [">= 2.1.0"])
     s.add_dependency(%q<hoe>, [">= 2.3.2"])
   end
 end
