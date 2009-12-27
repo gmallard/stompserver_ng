@@ -40,8 +40,9 @@ EventMachine::run do
         stomp.auth_required,    # *args: arg[0] 
         stomp.queue_manager,    # *args: arg[1] 
         stomp.topic_manager,    # *args: arg[2] 
-        stomp.stompauth) {      # *args: arg[3] 
-    }
+        stomp.stompauth,        # *args: arg[3] 
+        config.opts             # Options hash
+      )
 
   # TODO: any http testing and protocol handler changes required.
   if $HTTP_ENABLE

@@ -26,13 +26,24 @@ class Stomp < EventMachine::Connection
     #
     @@log = Logger.new(STDOUT)
     @@log.level = StompServer::LogHelper.get_loglevel()
+    #
+    @@options = (Hash === args.last) ? args.pop : {}
     # Arguments are passed from EventMachine::start_server
     @@auth_required = args[0]
     @@queue_manager = args[1]
     @@topic_manager = args[2]
     @@stompauth =     args[3]
     #
-    @@log.debug("#{self} protocol initialize complete")
+    # N.B.: The session ID is an instance variable!
+    #
+    if @@options[:session_cache] == 0
+      @session_id = "wow"
+    else
+      @session_id = StompServer::SessionIDManager.get_cache_id(@@options[:session_cache])
+    end
+    @@log.debug("#{self} Session ID assigned: #{@session_id}")
+    #
+    @@log.debug("#{self} Protocol initialization complete")
   end
 
 # :stopdoc:
@@ -213,7 +224,8 @@ class Stomp < EventMachine::Connection
       end
     end
     @@log.debug "#{self} Connecting"
-    response = StompServer::StompFrame.new("CONNECTED", {'session' => 'wow'})
+    response = StompServer::StompFrame.new("CONNECTED", {'session' => @session_id})
+    #
     stomp_send_data(response)
     @connected = true
   end

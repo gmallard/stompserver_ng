@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'eventmachine'
+require 'uuid'
 require 'stomp_server/stomp_frame'
 require 'stomp_server/stomp_id'
 require 'stomp_server/stomp_auth'
@@ -14,7 +15,36 @@ require 'logger'
 
 module StompServer
   VERSION = '0.9.9.2009.12.25.00'
-
+  #
+  # session ID cache manager
+  #
+  class SessionIDManager
+    #
+    @@session_cache = nil
+    #
+    @@generator = UUID::new
+    #
+    def self.initialize_cache(requested_size)
+      @@session_cache = @@session_cache || []
+      return @@session_cache if @@session_cache.size > requested_size
+      (requested_size - @@session_cache.size).times do
+        @@session_cache << @@generator.generate
+      end
+    end
+    #
+    def self.get_cache_id(requested_size)
+      session_id = @@session_cache.pop
+      initialize_cache(requested_size) if @@session_cache.size == 0
+      session_id
+    end
+    #
+    def self.dump_cache(logger)
+      logger.debug("Session ID Dump:")
+      @@session_cache.each do |sessid|
+        logger.debug("#{sessid}")
+      end
+    end
+  end
   #
   # Ruby Logger Level Handler.
   #
@@ -103,6 +133,7 @@ module StompServer
         :pidfile => 'stompserver.pid',  # -P
         :queue => 'memory',             # -q
         :storage => ".stompserver",     # -s
+        :session_cache => 0,            # -u
         :working_dir => Dir.getwd,      # -w
         :daemon => false                # -z
       }
@@ -198,6 +229,11 @@ module StompServer
         "Change the storage directory (default: .stompserver, relative to working_dir)") {|s| 
         hopts[:storage] = s}
 
+      # :session_cache
+      opts_parser.on("-S", "--session_cache=SIZE", Integer, 
+        "session ID cache size (default: 0, disable session ID cache)") {|s| 
+        hopts[:session_cache] = s}
+
       # :working_dir
       opts_parser.on("-w", "--working_dir=DIR", String, 
         "Change the working directory (default: current directory)") {|s| 
@@ -252,10 +288,14 @@ module StompServer
   end
 
   #
-  # Run the server.
+  # Run server start up.
   #
   class Run
+    #
     attr_accessor :queue_manager, :auth_required, :stompauth, :topic_manager
+
+    #
+    attr_accessor :session_cache
 
     # Intiialize
     def initialize(opts)
@@ -267,6 +307,7 @@ module StompServer
       @auth_required = nil
       @stompauth = nil
       @topic_manager = nil
+      @session_cache = nil
       @@log.info("#{self.class} Run class initialize complete")
     end
 
@@ -339,6 +380,12 @@ module StompServer
       @auth_required = @opts[:auth]
       if @auth_required
         @stompauth = StompServer::StompAuth.new(@opts[:passwd])
+      end
+
+      # Initialize session ID cache
+      StompServer::SessionIDManager.initialize_cache(@opts[:session_cache])
+      if @opts[:session_cache] > 0
+        StompServer::SessionIDManager.dump_cache(@@log);
       end
 
       # If we are going to daemonize, it should be about the last
