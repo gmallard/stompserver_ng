@@ -1,0 +1,48 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          stompserver
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start/stop the stompserver gem
+### END INIT INFO
+#
+NAME=stompserver
+DESC="stompserver ruby gem"
+#
+NAMEHOME=/home/$NAME
+#
+CONFIGFILE="$NAMEHOME/stompserver.conf"
+STOMPCMD="$NAMEHOME/bin/runserver.sh"
+#
+WORKDIR=$(grep "work_dir" $CONFIGFILE | cut -d" " -f2)
+PIDFILE="$WORKDIR/$NAME.pid"
+#
+EXTRA_OPTS="--daemon"
+EXTRA_OPTS="${EXTRA_OPTS} ${STOMP_OPTS}"
+#
+set -e
+#
+case "$1" in
+    start)
+        echo -n "Starting $DESC: "
+        test -f /var/tmp/ruby-uuid && rm /var/tmp/ruby-uuid
+        test -d $WORKDIR && rm -rf $WORKDIR
+        su -l $NAME -c "$STOMPCMD"
+        echo "$NAME."
+        ;;
+    stop)
+        echo -n "Stopping $DESC: "
+        pid=$(ps -ef | grep -i stompserver | grep -v grep|awk '{print $2}')
+        kill $pid
+        echo "$NAME."
+        ;;
+    *)
+        echo "Usage: $0 { start | stop }" >&2
+        exit 1
+        ;;
+esac
+#
+exit 0
+
