@@ -346,9 +346,6 @@ module StompServer
       Dir.mkdir(@opts[:logdir]) unless File.directory?(@opts[:logdir])
       Dir.mkdir(@opts[:etcdir]) unless File.directory?(@opts[:etcdir])
 
-      # Write pidfile
-      open(@opts[:pidfile],"w") {|f| f.write(Process.pid) }
-
       # Determine qstore type
       if @opts[:queue] == 'dbm'
         qstore=StompServer::DBMQueue.new(@opts[:storage])
@@ -388,7 +385,7 @@ module StompServer
         StompServer::SessionIDManager.dump_cache(@@log);
       end
 
-      # If we are going to daemonize, it should be about the last
+      # If we are going to daemonize, it should be almost the last
       # thing we do here.
       @@log.info("#{self.class}.start Daemonize: #{@opts[:daemon]}")
       if @opts[:daemon]
@@ -403,7 +400,12 @@ module StompServer
         Dir.chdir(@opts[:working_dir])
       end
 
-      # OK, so no daemon: log and set the SIGINT signal handler.
+      # But write pidfile only after possible daemonization
+      curr_pid = Process.pid
+      open(@opts[:pidfile],"w") {|f| f.write(curr_pid) }
+      @@log.debug("Pid File Contents: #{curr_pid}")
+
+      # OK, log and set the SIGINT signal handler.
       @@log.info("#{self.class}.start setting trap at completion")
       StompServer::LogHelper.showversion(@@log) # one more time at startup
       StompServer::LogHelper.showoptions(@@log, @opts) # Dump runtime options
