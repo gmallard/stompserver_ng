@@ -22,11 +22,21 @@ module StompServer
     #
     @@session_cache = nil
     #
-    @@generator = UUID::new
+    @@generator = nil
     #
-    def self.initialize_cache(requested_size)
+    def self.initialize_cache(requested_size, logger)
+      #
+      return [] if requested_size <= 0
+      #
       @@session_cache = @@session_cache || []
+      #
+      if not @@generator
+        UUID::state_file = "./.temp_uuid_state"
+        @@generator = UUID::new()
+      end
+      #
       return @@session_cache if @@session_cache.size > requested_size
+      #
       (requested_size - @@session_cache.size).times do
         @@session_cache << @@generator.generate
       end
@@ -158,7 +168,7 @@ module StompServer
       end
 
       # Configuration is complete!
-      @@log.info("#{self.class} Configuration complete")
+      @@log.debug("#{self.class} Configuration complete")
     end
 
     def getopts()
@@ -308,7 +318,7 @@ module StompServer
       @stompauth = nil
       @topic_manager = nil
       @session_cache = nil
-      @@log.info("#{self.class} Run class initialize complete")
+      @@log.debug("#{self.class} Run class initialize method complete")
     end
 
     # Server stop on SIGINT
@@ -322,7 +332,7 @@ module StompServer
 
     # Startup
     def start
-      @@log.info("#{self.class}.start begins")
+      @@log.debug("#{self.class}.start begins")
 
       # Handle group priviliges!
       # N.B.: Handle these options from the command line ?????????
@@ -349,17 +359,17 @@ module StompServer
       # Determine qstore type
       if @opts[:queue] == 'dbm'
         qstore=StompServer::DBMQueue.new(@opts[:storage])
-        @@log.info "Queue storage is DBM"
+        @@log.debug "Queue storage is DBM"
       elsif @opts[:queue] == 'file'
         qstore=StompServer::FileQueue.new(@opts[:storage])
-        @@log.info "Queue storage is FILE"
+        @@log.debug "Queue storage is FILE"
       elsif @opts[:queue] == 'activerecord'
         require 'stomp_server/queue/activerecord_queue'
         qstore=StompServer::ActiveRecordQueue.new(@opts[:etcdir], @opts[:storage])
-        @@log.info "Queue storage is ActiveRecord"
+        @@log.debug "Queue storage is ActiveRecord"
       else
         qstore=StompServer::MemoryQueue.new
-        @@log.info "Queue storage is MEMORY"
+        @@log.debug "Queue storage is MEMORY"
       end
 
       # Set checkpoint interval
@@ -380,14 +390,14 @@ module StompServer
       end
 
       # Initialize session ID cache
-      StompServer::SessionIDManager.initialize_cache(@opts[:session_cache])
       if @opts[:session_cache] > 0
+        StompServer::SessionIDManager.initialize_cache(@opts[:session_cache], @@log)
         StompServer::SessionIDManager.dump_cache(@@log);
       end
 
       # If we are going to daemonize, it should be almost the last
       # thing we do here.
-      @@log.info("#{self.class}.start Daemonize: #{@opts[:daemon]}")
+      @@log.debug("#{self.class}.start Daemonize: #{@opts[:daemon]}")
       if @opts[:daemon]
         @@log.debug("#{self.class}.start going to background")
         @@log.debug("#{self.class}.start check #{@opts[:logfile]}")
@@ -406,7 +416,7 @@ module StompServer
       @@log.debug("Pid File Contents: #{curr_pid}")
 
       # OK, log and set the SIGINT signal handler.
-      @@log.info("#{self.class}.start setting trap at completion")
+      @@log.debug("#{self.class}.start setting trap at completion")
       StompServer::LogHelper.showversion(@@log) # one more time at startup
       StompServer::LogHelper.showoptions(@@log, @opts) # Dump runtime options
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }

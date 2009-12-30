@@ -1,9 +1,26 @@
 #
+# Backup files
+#
 *~
+#
+# Temporary stuff
+#
 temp*
+#
+# Patches
+#
 *.patch
-pkg*
+#
+# rdoc generated packages
+#
+pkg/
+#
+# rdoc documentation artifacts
 #
 doc/
 html/
+#
+# Private temporary files
+#
+.temp*
 
