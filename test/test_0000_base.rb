@@ -69,8 +69,8 @@ class Test_0000_Base < Test::Unit::TestCase
     @client = nil
   end
   #
-  def subscribe(qname)
-    @conn.subscribe(qname)
+  def subscribe(qname, headers = {})
+    @conn.subscribe(qname, headers)
   end
 
 end # of class
