@@ -24,7 +24,7 @@ module StompServer
     #
     @@generator = nil
     #
-    def self.initialize_cache(requested_size, logger)
+    def self.initialize_cache(requested_size)
       #
       return [] if requested_size <= 0
       #
@@ -391,7 +391,7 @@ module StompServer
 
       # Initialize session ID cache
       if @opts[:session_cache] > 0
-        StompServer::SessionIDManager.initialize_cache(@opts[:session_cache], @@log)
+        StompServer::SessionIDManager.initialize_cache(@opts[:session_cache])
         StompServer::SessionIDManager.dump_cache(@@log);
       end
 
