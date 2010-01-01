@@ -189,13 +189,28 @@
 # * More documentation (in progress)
 # * Build gem (see above) :DONE
 # * Install gem (see above) :DONE
-# * Full testing using 1.9.0 (mostly done)
-# * Full regression testing using 1.8.7 (mostly done)
+# * Full testing using 1.9.0 :DONE
+# * Full regression testing using 1.8.7 :DONE
 # * Everyting with the HTTP protocol handler.
 #
 # == Required Gems
 #
-# The eventmachine dependency is now increased to 0.12.0.
+# Required gems are:
 #
+# * ["daemons", ">= 1.0.10"]
+# * ["eventmachine", ">= 0.12.10"]
+# * ["hoe", ">= 2.3.2"]
+# * ["uuid", ">= 2.1.0"]
+#
+# == Version 0.9.9.2010.01.01.00
+#
+# * Some fixes for 'ack' => 'client' processing.  The first step down this road.
+# * Tests for same.  Tests are intermittently unstable due to previously unseen problems.
+# * Some fixes around session ID cache handling.
+# * Cleaner creation of the .pid file at startup.
+# * Sample sysvinit boot scripts - very primitive.
+#
+
+
 
 

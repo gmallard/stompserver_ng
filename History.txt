@@ -1,3 +1,11 @@
+== 0.9.9.2010.01.01.00 / 01 Jan 2010
+
+* Some fixes for 'ack' => 'client' processing.  The first step down this road.
+* Tests for same.  Tests are intermittently unstable due to previously unseen problems.
+* Some fixes around session ID cache handling.
+* Cleaner creation of the .pid file at startup.
+* Sample sysvinit boot scripts - very primitive.
+
 == 0.9.9.2009.12.27.00 / 27 Dec 2009
 
 * Add session ID management

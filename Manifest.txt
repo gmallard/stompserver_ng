@@ -10,6 +10,8 @@ client/consume.rb
 client/send.rb
 config/stompserver.conf
 etc/passwd.example
+etc/stompserver
+etc/stompserver.conf
 lib/stomp_server.rb
 lib/stomp_server/protocols/http.rb
 lib/stomp_server/protocols/stomp.rb
@@ -44,6 +46,10 @@ test/test_0001_conn.rb
 test/test_0002_conn_sr.rb
 test/test_0006_client.rb
 test/test_0011_send_recv.rb
+test/test_0015_ack_conn.rb
+test/test_0016_ack_conn_mult.rb
+test/test_0017_ack_client.rb
+test/test_0018_ack_client_mult.rb
 test/test_queue_manager.rb
 test/test_stomp_frame.rb
 test/test_topic_manager.rb
