@@ -321,7 +321,7 @@ module StompServer
       @@log.debug("#{self.class} Run class initialize method complete")
     end
 
-    # Server stop on SIGINT
+    # Server stop on SIGINT or SIGTERM
     def stop(pidfile)
       @queue_manager.stop
       @@log.debug "Stompserver #{StompServer::VERSION} shutting down"
@@ -420,6 +420,7 @@ module StompServer
       StompServer::LogHelper.showversion(@@log) # one more time at startup
       StompServer::LogHelper.showoptions(@@log, @opts) # Dump runtime options
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
+      trap("TERM") { @@log.debug "TERM signal received.";stop(@opts[:pidfile]) }
     end
   end # of class Run
 #
