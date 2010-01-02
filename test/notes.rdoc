@@ -210,7 +210,10 @@
 # * Cleaner creation of the .pid file at startup.
 # * Sample sysvinit boot scripts - very primitive.
 #
-
-
-
+# == Version 0.9.9.2010.01.02.00
+#
+# * Fix server crashes when no ACK received.
+# * Tests for same.
+# * Handle SIGTERM.
+#
 

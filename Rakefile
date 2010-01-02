@@ -15,7 +15,7 @@ Hoe.spec('stompserver') do
   developer("gyver", "gyver@somewhere.com")
   developer("Mike Mangino", "mmangino-blocked@rubyforge.org")
   developer("robl", "robl@monkeyhelper.com")
-  developer("Guy Allard", "allard.guy.m@gmail.com")
+  developer("gmallard", "allard.guy.m@gmail.com")
   #
   rubyforge_name = 'stompserver'
   summary = 'A very light messaging server'

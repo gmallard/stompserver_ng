@@ -1,3 +1,4 @@
+.temp_uuid_state
 History.txt
 Manifest.txt
 README.txt
@@ -43,6 +44,7 @@ test/stompserver.memory.conf
 test/tesly.rb
 test/test_0000_base.rb
 test/test_0001_conn.rb
+test/test_0001_conn_mult.rb
 test/test_0002_conn_sr.rb
 test/test_0006_client.rb
 test/test_0011_send_recv.rb
@@ -50,6 +52,12 @@ test/test_0015_ack_conn.rb
 test/test_0016_ack_conn_mult.rb
 test/test_0017_ack_client.rb
 test/test_0018_ack_client_mult.rb
+test/test_0019_ack_no_ack.rb
+test/test_0020_ack_ns_reget_noack.rb
+test/test_0021_ack_ns_reget_ack.rb
+test/test_0022_ack_noack_conn.rb
+test/test_0023_ack_noack_reconn_noack.rb
+test/test_0024_ack_noack_reconn_ack.rb
 test/test_queue_manager.rb
 test/test_stomp_frame.rb
 test/test_topic_manager.rb
