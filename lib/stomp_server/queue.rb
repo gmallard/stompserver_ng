@@ -113,19 +113,42 @@ class Queue
 
   # requeue
   def requeue(dest,frame)
-    @@log.debug "#{self} requeue"
+    @@log.debug "#{self} requeue, for #{dest}, frame: #{frame.inspect}"
     open_queue(dest) unless @queues.has_key?(dest)
     msgid = frame.headers['message-id']
+    #
+    # Note: frame.headers['max-exceptions'] is currently _never_ set any where!
+    #
     if frame.headers['max-exceptions'] and @frames[dest][msgid][:exceptions] >= frame.headers['max-exceptions'].to_i
       enqueue("/queue/deadletter",frame)
       return
     end
+    #
     writeframe(dest,frame,msgid)
     @queues[dest][:frames].unshift(msgid)
+=begin
+    @@log.debug("RQ1 @frames: #{@frames.inspect}")
+    @@log.debug("RQ1 @frames[dest]: #{@frames[dest].inspect}")
+    @@log.debug("RQ1 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
+=end
+    #
+    # Is this _always_ the case in this method ?????
+    unless @frames[dest][msgid]
+      @frames[dest][msgid] = Hash.new
+      @frames[dest][msgid][:exceptions] = 0
+      @frames[dest][msgid][:client_id] = frame.headers['client-id'] if frame.headers['client-id']
+      @frames[dest][msgid][:expires] = frame.headers['expires'] if frame.headers['expires']
+    end
+    #
     @frames[dest][msgid][:exceptions] += 1
     @queues[dest][:dequeued] -= 1
     @queues[dest][:exceptions] += 1
     @queues[dest][:size] += 1
+=begin
+    @@log.debug("RQ2 @frames: #{@frames.inspect}")
+    @@log.debug("RQ2 @frames[dest]: #{@frames[dest].inspect}")
+    @@log.debug("RQ2 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
+=end
     save_queue_state
     return true
   end
@@ -138,20 +161,30 @@ class Queue
     @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
     writeframe(dest,frame,msgid)
     @queues[dest][:frames].push(msgid)
+=begin
+    @@log.debug("EQ1 @frames: #{@frames.inspect}")
+    @@log.debug("EQ1 @frames[dest]: #{@frames[dest].inspect}")
+    @@log.debug("EQ1 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
+=end
     @frames[dest][msgid] = Hash.new
-    @frames[dest][msgid][:exceptions] =0
+    @frames[dest][msgid][:exceptions] = 0
     @frames[dest][msgid][:client_id] = frame.headers['client-id'] if frame.headers['client-id']
     @frames[dest][msgid][:expires] = frame.headers['expires'] if frame.headers['expires']
     @queues[dest][:msgid] += 1
     @queues[dest][:enqueued] += 1
     @queues[dest][:size] += 1
+=begin
+    @@log.debug("EQ2 @frames: #{@frames.inspect}")
+    @@log.debug("EQ2 @frames[dest]: #{@frames[dest].inspect}")
+    @@log.debug("EQ2 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
+=end
     save_queue_state
     return true
   end
 
   # dequeue
   def dequeue(dest)
-    @@log.debug "#{self} dequeue"
+    @@log.debug "#{self} dequeue, dest: #{dest}"
     return false unless message_for?(dest)
     msgid = @queues[dest][:frames].shift
     frame = readframe(dest,msgid)
@@ -166,25 +199,25 @@ class Queue
 
   # messsage_for?
   def message_for?(dest)
-    @@log.debug "#{self} message_for?"
+    @@log.debug "#{self} message_for?, dest: #{dest}"
     return (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
   end
 
   # writeframe
   def writeframe(dest,frame,msgid)
-    @@log.debug "#{self} writeframe"
+    @@log.debug "#{self} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
     _writeframe(dest,frame,msgid)
   end
 
   # readframe
   def readframe(dest,msgid)
-    @@log.debug "#{self} readframe"
+    @@log.debug "#{self} readframe, dest: #{dest}, msgid: #{msgid}"
     _readframe(dest,msgid)
   end
 
   # assign_id
   def assign_id(frame, dest)
-    @@log.debug "#{self} assign_id"
+    @@log.debug "#{self} assign_id, frame: #{frame}, dest: #{dest}"
     msg_id = @queues[dest].nil? ? 1 : @queues[dest][:msgid] 
     frame.headers['message-id'] = @stompid[msg_id] 
   end

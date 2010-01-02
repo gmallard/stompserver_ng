@@ -231,7 +231,8 @@ class QueueManager
   # ack
   #
   def ack(connection, frame)
-    @@log.debug "QM ack for message #{frame.headers['message-id']}, connection: #{p connection}"
+    @@log.debug "QM ACK for connection: #{connection.inspect}"
+    @@log.debug "QM ACK for frame: #{frame.inspect}"
     unless @pending[connection]
       @@log.debug "QM No message pending for connection!"
       return
@@ -239,7 +240,7 @@ class QueueManager
     msgid = frame.headers['message-id']
     p_msgid = @pending[connection].headers['message-id']
     if p_msgid != msgid
-      @@log.debug "QM Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
+      @@log.debug "QM ACK Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
       # We don't know what happened, we requeue
       # (probably a client connecting to a restarted server)
       frame = @pending[connection]
@@ -253,8 +254,9 @@ class QueueManager
   # disconnect
   #
   def disconnect(connection)
-    @@log.debug("QM DISCONNECT : #{p connection}")
+    @@log.debug("QM DISCONNECT for connection: #{connection.inspect}")
     frame = @pending[connection]
+    @@log.debug("QM DISCONNECT pending frame: #{frame.inspect}")
     if frame
       @qstore.requeue(frame.headers['destination'],frame)
       @pending.delete connection

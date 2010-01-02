@@ -18,6 +18,7 @@ class Test_0001_Conn < Test_0000_Base
   def test_0010_connect
     open_conn()
     assert_not_nil(@conn, "connection should not be nil")
+    sleep @sleep_time if @sleep_time > 0
   end
   #
   def test_0015_disconnect

@@ -11,6 +11,7 @@ class Test_0000_Base < Test::Unit::TestCase
     @runparms = load_config()
     @conn = nil
     @client = nil
+    @sleep_time = ENV['TEST_SLEEP'] ? ENV['TEST_SLEEP'].to_f : 0
   end # of setup
 
   #
