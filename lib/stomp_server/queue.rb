@@ -31,7 +31,7 @@ module StompServer
       end
 
       @queues.keys.each do |dest|
-        @@log.debug "Q  #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+        @@log.debug "Q  #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
       end
 
       @@log.debug("Q #{self} initialized in #{@directory}")
@@ -51,11 +51,11 @@ module StompServer
 
     # stop
     def stop
-      @@log.debug "#{self} Shutting down Queue"
+      @@log.debug "#{self} Shutting down Queues, queue count: #{@queues.size}"
       #
-      @queues.keys.each {|dest| close_queue(dest)}
       @queues.keys.each do |dest|
-        @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+        @@log.debug "#{self}: Queue #{dest}: size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
+        close_queue(dest)
       end
       save_queue_state
     end
@@ -66,7 +66,7 @@ module StompServer
       now=Time.now
       @next_save ||=now
       if now >= @next_save
-        @@log.debug "Saving Queue State" if $DEBUG
+        @@log.debug "#{self} saving state"
         qinfo = {:queues => @queues, :frames => @frames}
         # write then rename to make sure this is atomic
         File.open("#{@directory}/qinfo.new", "wb") { |f| f.write Marshal.dump(qinfo)}
@@ -97,7 +97,7 @@ module StompServer
         _close_queue(dest)
         @queues.delete(dest)
         @frames.delete(dest)
-        @@log.debug "Queue #{dest} removed." if $DEBUG
+        @@log.debug "Queue #{dest} removed."
       end
     end
 
@@ -117,7 +117,7 @@ module StompServer
       @queues[dest][:dequeued] = 0
       @queues[dest][:exceptions] = 0
       _open_queue(dest)
-      @@log.debug "Created queue #{dest}" if $DEBUG
+      @@log.debug "Created queue #{dest}"
     end
 
     # requeue
@@ -188,7 +188,7 @@ module StompServer
       # update queues ... dest .... :frames here
       msgid = @queues[dest][:frames].shift
       frame = readframe(dest,msgid)
-      @@log.debug("Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      @@log.debug("#{self} Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
 
       # update queues (queues[dest])
       # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions

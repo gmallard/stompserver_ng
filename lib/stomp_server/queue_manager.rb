@@ -100,7 +100,7 @@ class QueueManager
   # stop
   #
   def stop
-    @qstore.stop if @qstore.methods.include?('stop')
+    @qstore.stop if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
   end
   #
   # subscribe
