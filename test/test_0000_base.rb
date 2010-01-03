@@ -3,8 +3,6 @@ require 'stomp'
 require 'test/unit'
 require 'yaml'
 #
-# $:.unshift File.dirname(__FILE__)
-#
 class Test_0000_Base < Test::Unit::TestCase
 
   def setup
@@ -24,16 +22,19 @@ class Test_0000_Base < Test::Unit::TestCase
   def load_config()
     yfname = File.join(File.dirname(__FILE__), "props.yaml")
     parms = YAML.load(File.open(yfname))
+    # Allow override of host and/or port from the environment.
+    parms[:host] = ENV['STOMP_HOST'] if ENV['STOMP_HOST']
+    parms[:port] = ENV['STOMP_PORT'] if ENV['STOMP_PORT']
     parms
   end
 
   protected
   #
   def check_parms()
-    assert_not_nil(@runparms[:userid],"userid should not be nil")
-    assert_not_nil(@runparms[:password],"userid should not be nil")
-    assert_not_nil(@runparms[:host],"userid should not be nil")
-    assert_not_nil(@runparms[:port],"userid should not be nil")
+    assert_not_nil(@runparms[:userid],"userid must be present")
+    assert_not_nil(@runparms[:password],"password must be present")
+    assert_not_nil(@runparms[:host],"host must be present")
+    assert_not_nil(@runparms[:port],"port must be present")
   end
   #
   def open_conn()
@@ -73,6 +74,6 @@ class Test_0000_Base < Test::Unit::TestCase
   def subscribe(qname, headers = {})
     @conn.subscribe(qname, headers)
   end
-
+  #
 end # of class
 
