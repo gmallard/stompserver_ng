@@ -307,6 +307,9 @@ class Stomp < EventMachine::Connection
     cmd = frame.command.downcase.to_sym
     raise "#{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
     raise "#{self} Not connected" if !@connected && cmd != :connect
+    @@log.debug("process_frame: cmd: #{cmd}")
+    # Send receipt first if required
+    send_receipt(frame.headers['receipt']) if frame.headers['receipt']
     #
     # I really like this code, but my needs are a little trickier
     # 
@@ -316,8 +319,6 @@ class Stomp < EventMachine::Connection
       cmd = :sendmsg if cmd == :send
       send(cmd, frame) # WARNING: call Object#send !!!
     end
-    #    
-    send_receipt(frame.headers['receipt']) if frame.headers['receipt']
   end
   #
   # process_frames
