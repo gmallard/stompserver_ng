@@ -2,225 +2,246 @@
 #
 #
 module StompServer
-#
-# == Queue
-#
-class Queue
-  # the check point interval
-  attr_accessor :checkpoint_interval
+  #
+  # == Queue
+  #
+  class Queue
+    # the check point interval
+    attr_accessor :checkpoint_interval
 
-  # initiialize
-  def initialize(directory='.stompserver', delete_empty=true)
+    # initiialize
+    def initialize(directory='.stompserver', delete_empty=true)
 
-    @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogHelper.get_loglevel()
-    @@log.debug("Q #{self} initialization starts")
+      @@log = Logger.new(STDOUT)
+      @@log.level = StompServer::LogHelper.get_loglevel()
+      @@log.debug("Q #{self} initialization starts")
 
-    @stompid = StompServer::StompId.new
-    @delete_empty = delete_empty
-    @directory = directory
-    Dir.mkdir(@directory) unless File.directory?(@directory)
-    if File.exists?("#{@directory}/qinfo")
-      qinfo = Hash.new
-      File.open("#{@directory}/qinfo", "rb") { |f| qinfo = Marshal.load(f.read)}
-      @queues = qinfo[:queues]
-      @frames = qinfo[:frames]
-    else
-      @queues = Hash.new
-      @frames = Hash.new
+      @stompid = StompServer::StompId.new
+      @delete_empty = delete_empty
+      @directory = directory
+      Dir.mkdir(@directory) unless File.directory?(@directory)
+      if File.exists?("#{@directory}/qinfo")
+        qinfo = Hash.new
+        File.open("#{@directory}/qinfo", "rb") { |f| qinfo = Marshal.load(f.read)}
+        @queues = qinfo[:queues]
+        @frames = qinfo[:frames]
+      else
+        @queues = Hash.new
+        @frames = Hash.new
+      end
+
+      @queues.keys.each do |dest|
+        @@log.debug "Q  #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+      end
+
+      @@log.debug("Q #{self} initialized in #{@directory}")
+
+      #
+      # Cleanup dead queues and save the state of the queues every so often.  
+      # Alternatively we could save the queue state every X number
+      # of frames that are put in the queue.  
+      # Should probably also read it after saving it to confirm integrity.
+      #
+      # Removed: this badly corrupts the queue when stopping with messages
+      #
+      # EventMachine::add_periodic_timer 1800, proc {@queues.keys.each 
+      # {|dest| close_queue(dest)};save_queue_state }
+      #
     end
 
-    @queues.keys.each do |dest|
-      @@log.debug "Q  #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+    # stop
+    def stop
+      @@log.debug "#{self} Shutting down Queue"
+      #
+      @queues.keys.each {|dest| close_queue(dest)}
+      @queues.keys.each do |dest|
+        @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+      end
+      save_queue_state
     end
 
-    @@log.debug("Q #{self} initialized in #{@directory}")
-
-    #
-    # Cleanup dead queues and save the state of the queues every so often.  
-    # Alternatively we could save the queue state every X number
-    # of frames that are put in the queue.  
-    # Should probably also read it after saving it to confirm integrity.
-    #
-    # Removed: this badly corrupts the queue when stopping with messages
-    #
-    # EventMachine::add_periodic_timer 1800, proc {@queues.keys.each 
-    # {|dest| close_queue(dest)};save_queue_state }
-    #
-  end
-
-  # stop
-  def stop
-    @@log.debug "#{self} Shutting down Queue"
-    #
-    @queues.keys.each {|dest| close_queue(dest)}
-    @queues.keys.each do |dest|
-      @@log.debug "Queue #{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}" if $DEBUG
+    # save_queue_state
+    def save_queue_state
+      @@log.debug "#{self} save_queue_state"
+      now=Time.now
+      @next_save ||=now
+      if now >= @next_save
+        @@log.debug "Saving Queue State" if $DEBUG
+        qinfo = {:queues => @queues, :frames => @frames}
+        # write then rename to make sure this is atomic
+        File.open("#{@directory}/qinfo.new", "wb") { |f| f.write Marshal.dump(qinfo)}
+        File.rename("#{@directory}/qinfo.new","#{@directory}/qinfo")
+        @next_save=now+checkpoint_interval
+      end
     end
-    save_queue_state
-  end
 
-  # save_queue_state
-  def save_queue_state
-    @@log.debug "#{self} save_queue_state"
-    now=Time.now
-    @next_save ||=now
-    if now >= @next_save
-      @@log.debug "Saving Queue State" if $DEBUG
-      qinfo = {:queues => @queues, :frames => @frames}
-      # write then rename to make sure this is atomic
-      File.open("#{@directory}/qinfo.new", "wb") { |f| f.write Marshal.dump(qinfo)}
-      File.rename("#{@directory}/qinfo.new","#{@directory}/qinfo")
-      @next_save=now+checkpoint_interval
+    # monitor
+    def monitor
+      @@log.debug "#{self} monitor"
+      stats = Hash.new
+      @queues.keys.each do |dest|
+        stats[dest] = { 
+          'size'        => @queues[dest][:size], 
+          'enqueued'    => @queues[dest][:enqueued], 
+          'dequeued'    => @queues[dest][:dequeued],
+          'exceptions'  => @queues[dest][:exceptions],
+        }
+      end
+      stats
     end
-  end
 
-  # monitor
-  def monitor
-    @@log.debug "#{self} monitor"
-    stats = Hash.new
-    @queues.keys.each do |dest|
-      stats[dest] = {'size' => @queues[dest][:size], 'enqueued' => @queues[dest][:enqueued], 'dequeued' => @queues[dest][:dequeued]}
+    # close_queue
+    def close_queue(dest)
+      @@log.debug "#{self} close_queue"
+      if @queues[dest][:size] == 0 and @queues[dest][:frames].size == 0 and @delete_empty
+        _close_queue(dest)
+        @queues.delete(dest)
+        @frames.delete(dest)
+        @@log.debug "Queue #{dest} removed." if $DEBUG
+      end
     end
-    stats
-  end
 
-  # close_queue
-  def close_queue(dest)
-    @@log.debug "#{self} close_queue"
-    if @queues[dest][:size] == 0 and @queues[dest][:frames].size == 0 and @delete_empty
-      _close_queue(dest)
-      @queues.delete(dest)
-      @frames.delete(dest)
-      @@log.debug "Queue #{dest} removed." if $DEBUG
+    # open_queue
+    def open_queue(dest)
+      @@log.debug "#{self} open_queue"
+      # New queue
+      @queues[dest] = Hash.new
+      # New frames for this queue
+      @frames[dest] = Hash.new
+      # Update queues
+      # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
+      @queues[dest][:size] = 0
+      @queues[dest][:frames] = Array.new
+      @queues[dest][:msgid] = 1
+      @queues[dest][:enqueued] = 0
+      @queues[dest][:dequeued] = 0
+      @queues[dest][:exceptions] = 0
+      _open_queue(dest)
+      @@log.debug "Created queue #{dest}" if $DEBUG
     end
-  end
 
-  # open_queue
-  def open_queue(dest)
-    @@log.debug "#{self} open_queue"
-    @queues[dest] = Hash.new
-    @frames[dest] = Hash.new
-    @queues[dest][:size] = 0
-    @queues[dest][:frames] = Array.new
-    @queues[dest][:msgid] = 1
-    @queues[dest][:enqueued] = 0
-    @queues[dest][:dequeued] = 0
-    @queues[dest][:exceptions] = 0
-    _open_queue(dest)
-    @@log.debug "Created queue #{dest}" if $DEBUG
-  end
+    # requeue
+    def requeue(dest,frame)
+      @@log.debug "#{self} requeue, for #{dest}, frame: #{frame.inspect}"
+      open_queue(dest) unless @queues.has_key?(dest)
+      msgid = frame.headers['message-id']
+      #
+      # Note: frame.headers['max-exceptions'] is currently _never_ set any where!
+      #
+      if frame.headers['max-exceptions'] and @frames[dest][msgid][:exceptions] >= frame.headers['max-exceptions'].to_i
+        enqueue("/queue/deadletter",frame)
+        return
+      end
+      #
+      writeframe(dest,frame,msgid)
 
-  # requeue
-  def requeue(dest,frame)
-    @@log.debug "#{self} requeue, for #{dest}, frame: #{frame.inspect}"
-    open_queue(dest) unless @queues.has_key?(dest)
-    msgid = frame.headers['message-id']
-    #
-    # Note: frame.headers['max-exceptions'] is currently _never_ set any where!
-    #
-    if frame.headers['max-exceptions'] and @frames[dest][msgid][:exceptions] >= frame.headers['max-exceptions'].to_i
-      enqueue("/queue/deadletter",frame)
-      return
+      # update queues (queues[dest])
+      # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
+      @queues[dest][:size] += 1
+      @queues[dest][:frames].unshift(msgid)
+      # no :msgid here
+      # no :enqueued here
+      # no :dequeued here
+      @queues[dest][:exceptions] += 1
+
+      # update frames
+      #
+      # Is this _always_ the case in this method ?????
+      unless @frames[dest][msgid]
+        new_frames_entry(dest, frame, msgid)
+      end
+      #
+      @frames[dest][msgid][:exceptions] += 1
+      @frames[dest][msgid][:requeued] += 1
+      save_queue_state
+      return true
     end
-    #
-    writeframe(dest,frame,msgid)
-    @queues[dest][:frames].unshift(msgid)
-=begin
-    @@log.debug("RQ1 @frames: #{@frames.inspect}")
-    @@log.debug("RQ1 @frames[dest]: #{@frames[dest].inspect}")
-    @@log.debug("RQ1 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
-=end
-    #
-    # Is this _always_ the case in this method ?????
-    unless @frames[dest][msgid]
+
+    # enqueue
+    def enqueue(dest,frame)
+      @@log.debug "#{self} enqueue"
+      open_queue(dest) unless @queues.has_key?(dest)
+      msgid = assign_id(frame, dest)
+      @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      writeframe(dest,frame,msgid)
+
+      # update queues (queues[dest])
+      # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
+      @queues[dest][:size] += 1
+      @queues[dest][:frames].push(msgid)
+      @queues[dest][:msgid] += 1
+      @queues[dest][:enqueued] += 1
+      # no :dequeue here
+      # no :exceptions here
+
+      # Update frames
+      # Initialize frames entry for this: dest, frame, and msgid
+      new_frames_entry(dest, frame, msgid)
+      save_queue_state
+      return true
+    end
+
+    # dequeue
+    def dequeue(dest)
+      @@log.debug "#{self} dequeue, dest: #{dest}"
+      return false unless message_for?(dest)
+      # update queues ... dest .... :frames here
+      msgid = @queues[dest][:frames].shift
+      frame = readframe(dest,msgid)
+      @@log.debug("Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+
+      # update queues (queues[dest])
+      # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
+      @queues[dest][:size] -= 1
+      # :frames - see above
+      @queues[dest][:msgid] -= 1
+      # :enqueued - no change
+      @queues[dest][:dequeued] += 1
+      # :exceptions - no change
+
+      @queues[dest].delete(msgid)
+
+      close_queue(dest)
+      save_queue_state
+      return frame
+    end
+
+    # messsage_for?
+    def message_for?(dest)
+      @@log.debug "#{self} message_for?, dest: #{dest}"
+      return (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
+    end
+
+    # writeframe
+    def writeframe(dest,frame,msgid)
+      @@log.debug "#{self} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
+      _writeframe(dest,frame,msgid)
+    end
+
+    # readframe
+    def readframe(dest,msgid)
+      @@log.debug "#{self} readframe, dest: #{dest}, msgid: #{msgid}"
+      _readframe(dest,msgid)
+    end
+
+    # assign_id
+    def assign_id(frame, dest)
+      @@log.debug "#{self} assign_id, frame: #{frame}, dest: #{dest}"
+      msg_id = @queues[dest].nil? ? 1 : @queues[dest][:msgid] 
+      frame.headers['message-id'] = @stompid[msg_id] 
+    end
+
+    private
+    # new_frames_entry
+    def new_frames_entry(dest, frame, msgid)
       @frames[dest][msgid] = Hash.new
       @frames[dest][msgid][:exceptions] = 0
+      @frames[dest][msgid][:requeued] = 0
       @frames[dest][msgid][:client_id] = frame.headers['client-id'] if frame.headers['client-id']
       @frames[dest][msgid][:expires] = frame.headers['expires'] if frame.headers['expires']
     end
-    #
-    @frames[dest][msgid][:exceptions] += 1
-    @queues[dest][:dequeued] -= 1
-    @queues[dest][:exceptions] += 1
-    @queues[dest][:size] += 1
-=begin
-    @@log.debug("RQ2 @frames: #{@frames.inspect}")
-    @@log.debug("RQ2 @frames[dest]: #{@frames[dest].inspect}")
-    @@log.debug("RQ2 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
-=end
-    save_queue_state
-    return true
-  end
-
-  # enqueue
-  def enqueue(dest,frame)
-    @@log.debug "#{self} enqueue"
-    open_queue(dest) unless @queues.has_key?(dest)
-    msgid = assign_id(frame, dest)
-    @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
-    writeframe(dest,frame,msgid)
-    @queues[dest][:frames].push(msgid)
-=begin
-    @@log.debug("EQ1 @frames: #{@frames.inspect}")
-    @@log.debug("EQ1 @frames[dest]: #{@frames[dest].inspect}")
-    @@log.debug("EQ1 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
-=end
-    @frames[dest][msgid] = Hash.new
-    @frames[dest][msgid][:exceptions] = 0
-    @frames[dest][msgid][:client_id] = frame.headers['client-id'] if frame.headers['client-id']
-    @frames[dest][msgid][:expires] = frame.headers['expires'] if frame.headers['expires']
-    @queues[dest][:msgid] += 1
-    @queues[dest][:enqueued] += 1
-    @queues[dest][:size] += 1
-=begin
-    @@log.debug("EQ2 @frames: #{@frames.inspect}")
-    @@log.debug("EQ2 @frames[dest]: #{@frames[dest].inspect}")
-    @@log.debug("EQ2 @frames[dest][msgid]: #{@frames[dest][msgid].inspect}")
-=end
-    save_queue_state
-    return true
-  end
-
-  # dequeue
-  def dequeue(dest)
-    @@log.debug "#{self} dequeue, dest: #{dest}"
-    return false unless message_for?(dest)
-    msgid = @queues[dest][:frames].shift
-    frame = readframe(dest,msgid)
-    @@log.debug("Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
-    @queues[dest][:size] -= 1
-    @queues[dest][:dequeued] += 1
-    @queues[dest].delete(msgid)
-    close_queue(dest)
-    save_queue_state
-    return frame
-  end
-
-  # messsage_for?
-  def message_for?(dest)
-    @@log.debug "#{self} message_for?, dest: #{dest}"
-    return (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
-  end
-
-  # writeframe
-  def writeframe(dest,frame,msgid)
-    @@log.debug "#{self} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
-    _writeframe(dest,frame,msgid)
-  end
-
-  # readframe
-  def readframe(dest,msgid)
-    @@log.debug "#{self} readframe, dest: #{dest}, msgid: #{msgid}"
-    _readframe(dest,msgid)
-  end
-
-  # assign_id
-  def assign_id(frame, dest)
-    @@log.debug "#{self} assign_id, frame: #{frame}, dest: #{dest}"
-    msg_id = @queues[dest].nil? ? 1 : @queues[dest][:msgid] 
-    frame.headers['message-id'] = @stompid[msg_id] 
-  end
-end
-end
+  #
+  end # class Queue
+#
+end # module StompServer
 
