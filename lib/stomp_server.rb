@@ -14,7 +14,7 @@ require 'stomp_server/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '0.9.9.2010.01.02.00'
+  VERSION = '0.9.9.2010.01.08.00'
   #
   # session ID cache manager
   #

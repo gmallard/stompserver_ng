@@ -3,11 +3,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{stompserver}
-  s.version = "0.9.9.2010.01.02.00"
+  s.version = "0.9.9.2010.01.08.00"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Patrick Hurley", "Lionel Bouton", "snacktime", "gyver", "Mike Mangino", "robl", "gmallard"]
-  s.date = %q{2010-01-02}
+  s.date = %q{2010-01-08}
   s.default_executable = %q{stompserver}
   s.description = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO
 queues, queue monitoring, and basic authentication.}
@@ -21,7 +21,7 @@ queues, queue monitoring, and basic authentication.}
   s.rubyforge_project = %q{stompserver}
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO queues, queue monitoring, and basic authentication.}
-  s.test_files = ["test/test_queue_manager.rb", "test/test_stomp_frame.rb", "test/test_topic_manager.rb", "test/test_0000_base.rb", "test/test_0001_conn.rb", "test/test_0002_conn_sr.rb", "test/test_0006_client.rb", "test/test_0011_send_recv.rb", "test/test_0015_ack_conn.rb", "test/test_0016_ack_conn_mult.rb", "test/test_0017_ack_client.rb", "test/test_0018_ack_client_mult.rb", "test/test_0001_conn_mult.rb", "test/test_0019_ack_no_ack.rb", "test/test_0020_ack_ns_reget_noack.rb", "test/test_0021_ack_ns_reget_ack.rb", "test/test_0022_ack_noack_conn.rb", "test/test_0023_ack_noack_reconn_noack.rb", "test/test_0024_ack_noack_reconn_ack.rb"]
+  s.test_files = ["test/test_queue_manager.rb", "test/test_stomp_frame.rb", "test/test_topic_manager.rb", "test/test_0000_base.rb", "test/test_0001_conn.rb", "test/test_0001_conn_mult.rb", "test/test_0002_conn_sr.rb", "test/test_0006_client.rb", "test/test_0011_send_recv.rb", "test/test_0015_ack_conn.rb", "test/test_0016_ack_conn_mult.rb", "test/test_0017_ack_client.rb", "test/test_0018_ack_client_mult.rb", "test/test_0019_ack_no_ack.rb", "test/test_0020_ack_ns_reget_noack.rb", "test/test_0021_ack_ns_reget_ack.rb", "test/test_0022_ack_noack_conn.rb", "test/test_0023_ack_noack_reconn_noack.rb", "test/test_0024_ack_noack_reconn_ack.rb"]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION

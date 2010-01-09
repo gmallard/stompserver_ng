@@ -1,3 +1,9 @@
+== 0.9.9.2010.01.08.00 / 08 Jan 2010
+
+* Override server and/or port from tests.
+* Fix one more 1.9 compatability issue during shutdown.
+* Fix counts reported by monitor with ack => client.
+
 == 0.9.9.2010.01.02.00 / 02 Jan 2010
 
 * Fix server crashes when no ACK received.
