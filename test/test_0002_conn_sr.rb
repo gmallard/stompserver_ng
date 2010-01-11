@@ -5,37 +5,33 @@ require 'test/unit'
 $:.unshift File.dirname(__FILE__)
 require 'test_0000_base'
 #
+# Test a basic send and receive over a Stomp Connection.
+#
 class Test_0002_Conn_SR < Test_0000_Base
 
+  # Setup.
+  # * Open the connection
+  # * Generate queue name for this test
+  # * Specify the message
   def setup
     super
     open_conn()
-    @queuename = "/queue/connsr"
+    @queuename = "/queue/connsr/" + name()
     @test_message = "Abracadabra!"
   end
 
-  #
+  # Teardown.
+  # * Disconnect
   def teardown
     disconnect_conn()
   end
 
-  #
-  def test_0010_start
-    assert_not_nil(@conn, "connection should not be nil")
-  end
-
-  #
-  def test_0015_send
-    assert_nothing_raised() {
-      @conn.send(@queuename, @test_message) 
-    }
-  end
-
-  #
-  def test_0020_receive
+  # Test a single send and receive over the same connection.
+  def test_0010_send_receive
     received = nil
     assert_nothing_raised() {
-      subscribe(@queuename)
+      @conn.send(@queuename, @test_message) 
+      connection_subscribe(@queuename)
       received = @conn.receive 
     }
     assert_not_nil(received, "something should be received")
