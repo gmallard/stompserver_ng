@@ -143,7 +143,7 @@ module StompServer
         :pidfile => 'stompserver.pid',  # -P
         :queue => 'memory',             # -q
         :storage => ".stompserver",     # -s
-        :session_cache => 0,            # -u
+        :session_cache => 0,            # -S
         :working_dir => Dir.getwd,      # -w
         :daemon => false                # -z
       }
@@ -206,12 +206,12 @@ module StompServer
 
       # :logdir
       opts_parser.on("-D", "--logdir=LOGDIR", String, 
-        "Log file directory  (default: log") {|d| 
+        "Log file directory  (default: log)") {|d| 
         hopts[:logdir] = d} # new
 
       # :log_level
       opts_parser.on("-l", "--log_level=LEVEL", String, 
-        "Logger Level (default: ERROR") {|l| 
+        "Logger Level (default: ERROR)") {|l| 
         hopts[:log_level] = l}
 
       # :logfile
