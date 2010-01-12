@@ -106,7 +106,7 @@ class QueueManager
   # subscribe
   #
   def subscribe(dest, connection, use_ack=false)
-    @@log.debug "QM subscribe to #{dest}, ack => #{use_ack}, connection: #{p connection}"
+    @@log.debug "QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}"
     user = Struct::QueueUser.new(connection, use_ack)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'

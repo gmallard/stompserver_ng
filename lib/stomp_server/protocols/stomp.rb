@@ -43,7 +43,7 @@ class Stomp < EventMachine::Connection
     end
     @@log.debug("#{self} Session ID assigned: #{@session_id}")
     #
-    @@log.debug("#{self} Protocol initialization complete")
+    @@log.warn("#{self} Protocol initialization complete, session=#{@session_id}")
   end
 
 # :stopdoc:
@@ -166,7 +166,7 @@ class Stomp < EventMachine::Connection
   # Unbind the connection.
   #
   def unbind()
-    @@log.debug "#{self} Unbind called"
+    @@log.warn "#{self} Unbind called, session=#{@session_id}"
     @connected = false
     @@queue_manager.disconnect(self)
     @@topic_manager.disconnect(self)
@@ -223,7 +223,7 @@ class Stomp < EventMachine::Connection
         raise "#{self} Invalid Login"
       end
     end
-    @@log.debug "#{self} Connecting"
+    @@log.warn "#{self} Connecting, session=#{@session_id}"
     response = StompServer::StompFrame.new("CONNECTED", {'session' => @session_id})
     #
     stomp_send_data(response)
@@ -233,7 +233,7 @@ class Stomp < EventMachine::Connection
   # Stomp Protocol - DISCONNECT
   #
   def disconnect(frame)
-    @@log.debug "#{self} Polite disconnect"
+    @@log.warn "#{self} Polite disconnect, session=#{@session_id}"
     close_connection_after_writing
   end
 
