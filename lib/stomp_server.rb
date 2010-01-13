@@ -263,16 +263,26 @@ module StompServer
       opts_parser.parse(ARGV)
 
       # Handle the config file
+      config_found = false
+      # Load a default config file first if it exists.
       loaded_opts = {}
-      if hopts[:config]
-        @@log.debug("Config file is: #{hopts[:config]}")
-        loaded_opts = YAML.load_file(hopts[:config])
-      elsif File.exists?(@defaults[:config])
-        @@log.debug("Config file is: #{@defaults[:config]}")
-        loaded_opts = YAML.load_file(@defaults[:config])
-      else
-        @@log.warn("Config file not found")
+      full_path_default = File.expand_path(@defaults[:config])
+      if File.exists?(full_path_default)
+        @@log.debug("Loading config file defaults from: #{full_path_default}")
+        loaded_opts.merge!(YAML.load_file(full_path_default))
+        @defaults[:config] = full_path_default
+        config_found = true
       end
+      # If a command line specified config file exists, overlay any new
+      # parameters in that file.
+      full_path_cl = File.expand_path(hopts[:config])
+      if File.exists?(full_path_cl)
+        @@log.debug("Loading config file overrides from: #{full_path_cl}")
+        loaded_opts.merge!(YAML.load_file(full_path_cl))
+        hopts[:config] = full_path_cl
+        config_found = true
+      end
+      @@log.warn("No configuration file found.") unless config_found
 
       # Run basic required merges on all the options
       opts = {}                         # set to empty
