@@ -69,7 +69,7 @@ class Test_0017_Ack_Client < Test_0000_Base
       end
       sleep 0.5 until received
     }
-    assert_equal(ntimes,count,"counts should match: #{@queuename}")
+    assert_equal(ntimes,count,"counts should match: #{@queue_name}")
   end
 
 end # of class
