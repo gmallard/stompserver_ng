@@ -30,46 +30,48 @@ class Test_0017_Ack_Client < Test_0000_Base
 
   # Test ACK from client
   def test_0010_ack_send_receive
-    ack_client_test("ack")
+    ack_client_test(:ackparm => "ack", :times => 1, :mod => "0010")
   end
 
   # Test ACK from client with symbol
   def test_0020_ack_send_receive_sym
-    ack_client_test(:ack)
+    ack_client_test(:ackparm => :ack, :times => 1, :mod => "0020")
   end
 
   # Test ACK from client with miltiple messages
   def test_0030_ack_send_receive_mult
-    ack_client_test("ack", @times)
+    ack_client_test(:ackparm => "ack", :times => @times, :mod => "0030")
   end
 
   # Test ACK from client with symbol and multiple messages
   def test_0040_ack_send_receive_mult_sym
-    ack_client_test(:ack, @times)
+    ack_client_test(:ackparm => :ack, :times => @times, :mod => "0040")
   end
 
   private
 
-  def ack_client_test(ackparm = nil, ntimes = 1)
+  def ack_client_test(params = {})
     received = nil
     count = 0
     assert_nothing_raised() {
-      ntimes.times do |n|
+      params[:times].times do |n|
         @client.send(@queue_name, "#{@test_message} #{n+1}", 
           {"persistent" => true, 
-          "client-id" => "ack_client_send_multsr", 
+          "client-id" => "0017_putr_#{params[:mod]}", 
           "reply-to" => @queue_name} )
       end
       @client.subscribe(@queue_name,
-        {"persistent" => true, "client-id" => "ack_client_send_multrcv",
-         ackparm => "client" } ) do |message|
+        {"persistent" => true, 
+          "client-id" => "0017_getr_#{params[:mod]}",
+          params[:ackparm] => "client" } 
+          ) do |message|
         received = message
         @client.acknowledge(received)   # ACK the message
         count += 1
       end
-      sleep 0.5 until received
+      sleep 2.0 until received
     }
-    assert_equal(ntimes,count,"counts should match: #{@queue_name}")
+    assert_equal(params[:times],count,"counts should match: #{@queue_name}")
   end
 
 end # of class
