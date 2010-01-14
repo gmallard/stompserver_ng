@@ -275,12 +275,14 @@ module StompServer
       end
       # If a command line specified config file exists, overlay any new
       # parameters in that file.
-      full_path_cl = File.expand_path(hopts[:config])
-      if File.exists?(full_path_cl)
-        @@log.debug("Loading config file overrides from: #{full_path_cl}")
-        loaded_opts.merge!(YAML.load_file(full_path_cl))
-        hopts[:config] = full_path_cl
-        config_found = true
+      if hopts[:config]
+        full_path_cl = File.expand_path(hopts[:config])
+        if File.exists?(full_path_cl)
+          @@log.debug("Loading config file overrides from: #{full_path_cl}")
+          loaded_opts.merge!(YAML.load_file(full_path_cl))
+          hopts[:config] = full_path_cl
+          config_found = true
+        end
       end
       @@log.warn("No configuration file found.") unless config_found
 
