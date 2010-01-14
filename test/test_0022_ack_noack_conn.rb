@@ -35,6 +35,7 @@ class Test_0022_Ack_Noack_Conn < Test_0000_Base
   # * Never send an ACK
   # Expectation: no client errors, and no server crashes.
   def test_0010_ack_conn_no_ack
+    drainq(@queue_name)
     no_ack_get()
   end
 
