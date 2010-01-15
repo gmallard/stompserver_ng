@@ -16,13 +16,14 @@ NAMEHOME=/home/$NAME
 CONFIGFILE="$NAMEHOME/stompserver.conf"
 STOMPCMD="$NAMEHOME/bin/runserver.sh"
 #
-WORKDIR=$(grep "work_dir" $CONFIGFILE | cut -d" " -f2)
+WORKDIR=$(grep "working_dir" $CONFIGFILE | cut -d" " -f2)
 PIDFILE="$WORKDIR/$NAME.pid"
 #
 EXTRA_OPTS="--daemon"
 EXTRA_OPTS="${EXTRA_OPTS} ${STOMP_OPTS}"
 #
 set -e
+# set -x
 #
 case "$1" in
     start)
@@ -34,7 +35,7 @@ case "$1" in
         ;;
     stop)
         echo -n "Stopping $DESC: "
-        pid=$(ps -ef | grep -i stompserver | grep -v grep|awk '{print $2}')
+        pid=$(ps -ef | grep -i stompserver | grep -i ruby |awk '{print $2}')
         kill $pid
         echo "$NAME."
         ;;
@@ -44,5 +45,6 @@ case "$1" in
         ;;
 esac
 #
+# set +x
 exit 0
 
