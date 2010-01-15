@@ -216,4 +216,8 @@
 # * Tests for same.
 # * Handle SIGTERM.
 #
+# == Future Updates
+#
+# For updates after the previous version see the History.txt file.
+#
 
