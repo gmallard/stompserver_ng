@@ -12,6 +12,7 @@ config/stompserver_ng.conf
 etc/19xcompat/notes.rdoc
 etc/passwd.example
 etc/ppqinfo.rb
+etc/runserver.sh
 etc/stompserver_ng
 etc/stompserver_ng.conf
 lib/stomp_server.rb
