@@ -19,7 +19,7 @@ STOMPCMD="$NAMEHOME/bin/runserver.sh"
 WORKDIR=$(grep "working_dir" $CONFIGFILE | cut -d" " -f2)
 PIDFILE="$WORKDIR/$NAME.pid"
 #
-EXTRA_OPTS="--daemon --session-cache=25"
+EXTRA_OPTS="--daemon --session_cache=25 -C $CONFIGFILE"
 EXTRA_OPTS="${EXTRA_OPTS} ${STOMP_OPTS}"
 #
 set -e
@@ -30,7 +30,7 @@ case "$1" in
         echo -n "Starting $DESC: "
         test -f /var/tmp/ruby-uuid && rm /var/tmp/ruby-uuid
         test -d $WORKDIR && rm -rf $WORKDIR
-        su -l $NAME -c "$STOMPCMD"
+        su -l $NAME -c "$STOMPCMD $EXTRA_OPTS"
         echo "$NAME."
         ;;
     stop)
