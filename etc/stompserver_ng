@@ -1,15 +1,15 @@
 #!/bin/sh
 ### BEGIN INIT INFO
-# Provides:          stompserver
+# Provides:          stompserver_ng
 # Required-Start:    $syslog
 # Required-Stop:     $syslog
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start/stop the stompserver gem
+# Short-Description: Start/stop the stompserver_ng gem
 ### END INIT INFO
 #
-NAME=stompserver
-DESC="stompserver ruby gem"
+NAME=stompserver_ng
+DESC="stompserver_ng ruby gem"
 #
 NAMEHOME=/home/$NAME
 #
@@ -19,7 +19,7 @@ STOMPCMD="$NAMEHOME/bin/runserver.sh"
 WORKDIR=$(grep "working_dir" $CONFIGFILE | cut -d" " -f2)
 PIDFILE="$WORKDIR/$NAME.pid"
 #
-EXTRA_OPTS="--daemon"
+EXTRA_OPTS="--daemon --session-cache=25"
 EXTRA_OPTS="${EXTRA_OPTS} ${STOMP_OPTS}"
 #
 set -e
