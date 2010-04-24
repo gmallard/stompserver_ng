@@ -1,3 +1,8 @@
+== 1.0.0 / 24 Apr 2010
+
+* Rename the ruby gem.
+* Start new versioning methodology.
+
 == 0.9.9.2010.01.15.00 / 15 Jan 2010
 
 * Refactor and correct tests.
