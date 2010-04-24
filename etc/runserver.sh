@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /home/stompserver
+cd /home/stompserver_ng
 >stompserver.log
 echo Start >>stompserver.log
 x=$(ruby -v)
