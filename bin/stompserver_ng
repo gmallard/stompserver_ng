@@ -3,7 +3,7 @@ require 'rubygems'
 require 'etc'
 require 'yaml'
 require 'daemons/daemonize'
-require 'stomp_server'
+require 'stomp_server_ng'
 require 'optparse'
 require 'logger'
 

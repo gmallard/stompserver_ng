@@ -1,20 +1,20 @@
 require 'rubygems'
 require 'eventmachine'
 require 'uuid'
-require 'stomp_server/stomp_frame'
-require 'stomp_server/stomp_id'
-require 'stomp_server/stomp_auth'
-require 'stomp_server/topic_manager'
-require 'stomp_server/queue_manager'
-require 'stomp_server/queue'
-require 'stomp_server/queue/memory_queue'
-require 'stomp_server/queue/file_queue'
-require 'stomp_server/queue/dbm_queue'
-require 'stomp_server/protocols/stomp'
+require 'stomp_server_ng/stomp_frame'
+require 'stomp_server_ng/stomp_id'
+require 'stomp_server_ng/stomp_auth'
+require 'stomp_server_ng/topic_manager'
+require 'stomp_server_ng/queue_manager'
+require 'stomp_server_ng/queue'
+require 'stomp_server_ng/queue/memory_queue'
+require 'stomp_server_ng/queue/file_queue'
+require 'stomp_server_ng/queue/dbm_queue'
+require 'stomp_server_ng/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '1.0.0'
+  VERSION = '1.0.1'
   #
   # session ID cache manager
   #
@@ -111,6 +111,17 @@ module StompServer
       end
       logger.debug("Options Display Ends")
     end
+    #
+    # Show load path
+    #
+    def self.showloadpath(logger)
+      return unless @@loglevel == Logger::DEBUG
+      pos = 1
+      $:.each do |lp|
+        logger.debug("#{pos} #{lp}")
+        pos += 1
+      end
+    end
   end # of class LogHelper
   #
   # Module level configuration
@@ -159,6 +170,10 @@ module StompServer
       # Finalize logger level handling
       @@log.debug "Logger Level Requested: #{@opts[:log_level].upcase}"
       StompServer::LogHelper.set_loglevel(@opts)
+
+      # Show Load Path
+      StompServer::LogHelper.showloadpath(@@log)
+
       @@log.level = StompServer::LogHelper.get_loglevel()
 
       # Turn on $DEBUG for extra debugging info if requested
