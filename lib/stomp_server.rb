@@ -111,6 +111,17 @@ module StompServer
       end
       logger.debug("Options Display Ends")
     end
+    #
+    # Show load path
+    #
+    def self.showloadpath(logger)
+      return unless @@loglevel == Logger::DEBUG
+      pos = 1
+      $:.each do |lp|
+        logger.debug("#{pos} #{lp}")
+        pos += 1
+      end
+    end
   end # of class LogHelper
   #
   # Module level configuration
@@ -159,6 +170,10 @@ module StompServer
       # Finalize logger level handling
       @@log.debug "Logger Level Requested: #{@opts[:log_level].upcase}"
       StompServer::LogHelper.set_loglevel(@opts)
+
+      # Show Load Path
+      StompServer::LogHelper.showloadpath(@@log)
+
       @@log.level = StompServer::LogHelper.get_loglevel()
 
       # Turn on $DEBUG for extra debugging info if requested
