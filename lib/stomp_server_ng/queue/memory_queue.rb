@@ -15,7 +15,8 @@ class MemoryQueue
     @@log.debug "MemoryQueue initialized"
   end
 
-  def stop
+  def stop(session_id)
+    @@log.debug("#{session_id} memory queue shutdown")
   end
 
   def monitor
@@ -26,7 +27,7 @@ class MemoryQueue
     stats
   end
 
-  def dequeue(dest)
+  def dequeue(dest, session_id)
     if frame = @messages[dest].shift
       @stats[dest][:dequeued] += 1
       return frame
@@ -52,7 +53,7 @@ class MemoryQueue
     @messages[dest] += [frame]
   end
 
-  def message_for?(dest)
+  def message_for?(dest, session_id)
     !@messages[dest].empty?
   end
 

@@ -50,23 +50,23 @@ module StompServer
     end
 
     # stop
-    def stop
-      @@log.debug "#{self} Shutting down Queues, queue count: #{@queues.size}"
+    def stop(session_id)
+      @@log.debug "#{session_id} Shutting down Queues, queue count: #{@queues.size}"
       #
       @queues.keys.each do |dest|
-        @@log.debug "#{self}: Queue #{dest}: size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
+        @@log.debug "#{session_id}: Queue #{dest}: size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
         close_queue(dest)
       end
-      save_queue_state
+      save_queue_state(session_id)
     end
 
     # save_queue_state
-    def save_queue_state
-      @@log.debug "#{self} save_queue_state"
+    def save_queue_state(session_id)
+      @@log.debug "#{session_id} save_queue_state"
       now=Time.now
       @next_save ||=now
       if now >= @next_save
-        @@log.debug "#{self} saving state"
+        @@log.debug "#{session_id} saving state"
         qinfo = {:queues => @queues, :frames => @frames}
         # write then rename to make sure this is atomic
         File.open("#{@directory}/qinfo.new", "wb") { |f| f.write Marshal.dump(qinfo)}
@@ -91,19 +91,19 @@ module StompServer
     end
 
     # close_queue
-    def close_queue(dest)
-      @@log.debug "#{self} close_queue"
+    def close_queue(dest, session_id)
+      @@log.debug "#{session_id} close_queue"
       if @queues[dest][:size] == 0 and @queues[dest][:frames].size == 0 and @delete_empty
         _close_queue(dest)
         @queues.delete(dest)
         @frames.delete(dest)
-        @@log.debug "Queue #{dest} removed."
+        @@log.debug "#{session_id} Queue #{dest} removed."
       end
     end
 
     # open_queue
-    def open_queue(dest)
-      @@log.debug "#{self} open_queue"
+    def open_queue(dest, session_id)
+      @@log.debug "#{session_id} open_queue"
       # New queue
       @queues[dest] = Hash.new
       # New frames for this queue
@@ -122,8 +122,8 @@ module StompServer
 
     # requeue
     def requeue(dest,frame)
-      @@log.debug "#{self} requeue, for #{dest}, frame: #{frame.inspect}"
-      open_queue(dest) unless @queues.has_key?(dest)
+      @@log.debug "#{frame.headers['session']} requeue, for #{dest}, frame: #{frame.inspect}"
+      open_queue(dest, frame.headers['session']) unless @queues.has_key?(dest)
       msgid = frame.headers['message-id']
       #
       # Note: frame.headers['max-exceptions'] is currently _never_ set any where!
@@ -153,16 +153,16 @@ module StompServer
       #
       @frames[dest][msgid][:exceptions] += 1
       @frames[dest][msgid][:requeued] += 1
-      save_queue_state
+      save_queue_state(frame.headers['session'])
       return true
     end
 
     # enqueue
     def enqueue(dest,frame)
-      @@log.debug "#{self} enqueue"
-      open_queue(dest) unless @queues.has_key?(dest)
+      @@log.debug "#{frame.headers['session']} enqueue"
+      open_queue(dest, frame.headers['session']) unless @queues.has_key?(dest)
       msgid = assign_id(frame, dest)
-      @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      @@log.debug("#{frame.headers['session']} Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
       writeframe(dest,frame,msgid)
 
       # update queues (queues[dest])
@@ -177,18 +177,18 @@ module StompServer
       # Update frames
       # Initialize frames entry for this: dest, frame, and msgid
       new_frames_entry(dest, frame, msgid)
-      save_queue_state
+      save_queue_state(frame.headers['session'])
       return true
     end
 
     # dequeue
-    def dequeue(dest)
-      @@log.debug "#{self} dequeue, dest: #{dest}"
-      return false unless message_for?(dest)
+    def dequeue(dest, session_id)
+      @@log.debug "#{session_id} dequeue, dest: #{dest}"
+      return false unless message_for?(dest, session_id)
       # update queues ... dest .... :frames here
       msgid = @queues[dest][:frames].shift
-      frame = readframe(dest,msgid)
-      @@log.debug("#{self} Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      frame = readframe(dest,msgid,session_id)
+      @@log.debug("#{frame.headers['session']} Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
 
       # update queues (queues[dest])
       # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
@@ -201,32 +201,33 @@ module StompServer
 
       @queues[dest].delete(msgid)
 
-      close_queue(dest)
-      save_queue_state
+      close_queue(dest, frame.headers['session'])
+      save_queue_state(frame.headers['session'])
       return frame
     end
 
     # messsage_for?
-    def message_for?(dest)
-      @@log.debug "#{self} message_for?, dest: #{dest}"
-      return (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
+    def message_for?(dest, session_id)
+      retval = (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
+      @@log.debug "#{session_id} message_for?, dest: #{dest}, #{retval}"
+      return retval
     end
 
     # writeframe
     def writeframe(dest,frame,msgid)
-      @@log.debug "#{self} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
+      @@log.debug "#{frame.headers['session']} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
       _writeframe(dest,frame,msgid)
     end
 
     # readframe
-    def readframe(dest,msgid)
-      @@log.debug "#{self} readframe, dest: #{dest}, msgid: #{msgid}"
+    def readframe(dest,msgid, session_id)
+      @@log.debug "#{session_id} readframe, dest: #{dest}, msgid: #{msgid}"
       _readframe(dest,msgid)
     end
 
     # assign_id
     def assign_id(frame, dest)
-      @@log.debug "#{self} assign_id, frame: #{frame}, dest: #{dest}"
+      @@log.debug "#{frame.headers['session']} assign_id, frame: #{frame}, dest: #{dest}"
       msg_id = @queues[dest].nil? ? 1 : @queues[dest][:msgid] 
       frame.headers['message-id'] = @stompid[msg_id] 
     end
