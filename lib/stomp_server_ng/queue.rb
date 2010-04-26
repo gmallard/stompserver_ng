@@ -55,7 +55,7 @@ module StompServer
       #
       @queues.keys.each do |dest|
         @@log.debug "#{session_id}: Queue #{dest}: size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
-        close_queue(dest)
+        close_queue(dest, session_id)
       end
       save_queue_state(session_id)
     end
