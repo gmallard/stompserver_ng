@@ -445,6 +445,8 @@ module StompServer
       # OK, log and set the SIGINT signal handler.
       @@log.debug("#{self.class}.start setting trap at completion")
       StompServer::LogHelper.showversion(@@log) # one more time at startup
+      # Show Load Path
+      StompServer::LogHelper.showloadpath(@@log)
       StompServer::LogHelper.showoptions(@@log, @opts) # Dump runtime options
       trap("INT") { @@log.debug "INT signal received.";stop(@opts[:pidfile]) }
       trap("TERM") { @@log.debug "TERM signal received.";stop(@opts[:pidfile]) }
