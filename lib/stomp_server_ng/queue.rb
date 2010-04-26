@@ -122,7 +122,7 @@ module StompServer
 
     # requeue
     def requeue(dest,frame)
-      @@log.debug "#{self} requeue, for #{dest}, frame: #{frame.inspect}"
+      @@log.debug "#{frame.headers['session']} requeue, for #{dest}, frame: #{frame.inspect}"
       open_queue(dest) unless @queues.has_key?(dest)
       msgid = frame.headers['message-id']
       #
@@ -159,10 +159,10 @@ module StompServer
 
     # enqueue
     def enqueue(dest,frame)
-      @@log.debug "#{self} enqueue"
+      @@log.debug "#{frame.headers['session']} enqueue"
       open_queue(dest) unless @queues.has_key?(dest)
       msgid = assign_id(frame, dest)
-      @@log.debug("Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      @@log.debug("#{frame.headers['session']} Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
       writeframe(dest,frame,msgid)
 
       # update queues (queues[dest])
@@ -188,7 +188,7 @@ module StompServer
       # update queues ... dest .... :frames here
       msgid = @queues[dest][:frames].shift
       frame = readframe(dest,msgid)
-      @@log.debug("#{self} Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      @@log.debug("#{frame.headers['session']} Dequeue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
 
       # update queues (queues[dest])
       # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
@@ -208,13 +208,14 @@ module StompServer
 
     # messsage_for?
     def message_for?(dest)
-      @@log.debug "#{self} message_for?, dest: #{dest}"
-      return (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
+      retval = (@queues.has_key?(dest) and (!@queues[dest][:frames].empty?))
+      @@log.debug "#{self} message_for?, dest: #{dest}, #{retval}"
+      return retval
     end
 
     # writeframe
     def writeframe(dest,frame,msgid)
-      @@log.debug "#{self} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
+      @@log.debug "#{frame.headers['session']} writeframe, dest: #{dest}, frame: #{frame}, msgid: #{msgid}"
       _writeframe(dest,frame,msgid)
     end
 
@@ -226,7 +227,7 @@ module StompServer
 
     # assign_id
     def assign_id(frame, dest)
-      @@log.debug "#{self} assign_id, frame: #{frame}, dest: #{dest}"
+      @@log.debug "#{frame.headers['session']} assign_id, frame: #{frame}, dest: #{dest}"
       msg_id = @queues[dest].nil? ? 1 : @queues[dest][:msgid] 
       frame.headers['message-id'] = @stompid[msg_id] 
     end

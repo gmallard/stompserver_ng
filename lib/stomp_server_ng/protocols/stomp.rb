@@ -20,6 +20,8 @@ VALID_COMMANDS = [
 #
 class Stomp < EventMachine::Connection
 
+  attr_reader :session_id
+
   # Protocol handler initialization
   def initialize(*args)
     super(*args)
@@ -37,7 +39,8 @@ class Stomp < EventMachine::Connection
     # N.B.: The session ID is an instance variable!
     #
     if @@options[:session_cache] == 0
-      @session_id = "wow"
+      lt = Time.now
+      @session_id = "ssng_#{lt.to_f}"
     else
       @session_id = StompServer::SessionIDManager.get_cache_id(@@options[:session_cache])
     end
@@ -308,6 +311,8 @@ class Stomp < EventMachine::Connection
     raise "#{@session_id} #{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
     raise "#{@session_id} #{self} Not connected" if !@connected && cmd != :connect
     @@log.debug("#{@session_id} process_frame: #{frame.command}")
+    # Add session ID to the frame headers
+    frame.headers['session'] = @session_id
     # Send receipt first if required
     send_receipt(frame.headers['receipt']) if frame.headers['receipt']
     #
