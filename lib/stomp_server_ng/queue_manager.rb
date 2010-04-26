@@ -99,8 +99,8 @@ class QueueManager
   #
   # stop
   #
-  def stop
-    @qstore.stop if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
+  def stop(session_id)
+    @qstore.stop(session_id) if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
   end
   #
   # subscribe
@@ -139,7 +139,7 @@ class QueueManager
     # :startdoc:
 
     possible_queues = @queues.select{ |destination, users|
-      @qstore.message_for?(destination) &&
+      @qstore.message_for?(destination, connection.session_id) &&
         users.detect{|u| u.connection == connection}
     }
     if possible_queues.empty?
@@ -193,7 +193,7 @@ class QueueManager
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
     #
-    frame = @qstore.dequeue(dest)
+    frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
   end
   #
@@ -205,13 +205,13 @@ class QueueManager
     @@log.debug "#{user.connection.session_id} QM send_destination_backlog for #{dest}"
     if user.ack
       # only send one message (waiting for ack)
-      frame = @qstore.dequeue(dest)
+      frame = @qstore.dequeue(dest, user.connection.session_id)
       if frame
         send_to_user(frame, user)
         @@log.debug("#{user.connection.session_id} QM s_d_b single frame sent")
       end
     else
-      while frame = @qstore.dequeue(dest)
+      while frame = @qstore.dequeue(dest, user.connection.session_id)
         send_to_user(frame, user)
       end
     end
@@ -315,8 +315,8 @@ class QueueManager
   #
   # For protocol handlers that want direct access to the queue
   #
-  def dequeue(dest)
-    @qstore.dequeue(dest)
+  def dequeue(dest, session_id)
+    @qstore.dequeue(dest, session_id)
   end
   #
   # enqueue

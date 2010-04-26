@@ -350,7 +350,7 @@ module StompServer
 
     # Server stop on SIGINT or SIGTERM
     def stop(pidfile)
-      @queue_manager.stop
+      @queue_manager.stop("KILL_ISSUED")
       @@log.debug "Stompserver #{StompServer::VERSION} shutting down"
       STDOUT.flush
       EventMachine::stop_event_loop
