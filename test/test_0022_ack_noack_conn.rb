@@ -29,16 +29,6 @@ class Test_0022_Ack_Noack_Conn < Test_0000_Base
     disconnect_conn()
   end
 
-  # Test Ack Conn No Ack:
-  # * Send a messsage
-  # * Subscribe with ack, and receive
-  # * Never send an ACK
-  # Expectation: no client errors, and no server crashes.
-  def test_0010_ack_conn_no_ack
-    drainq(@queue_name)
-    no_ack_get()
-  end
-
   # Test Ack Conn No Ack Reget:
   # * Send a messsage
   # * Subscribe with ack, and receive
@@ -46,6 +36,7 @@ class Test_0022_Ack_Noack_Conn < Test_0000_Base
   # * Reconnect and subscribe with ack => auto
   # * Re-receive the same message
   # Expectation: no client errors, and no server crashes.
+
   def test_0020_ack_conn_no_ack_reget
     received = no_ack_get()
     #
@@ -70,6 +61,7 @@ class Test_0022_Ack_Noack_Conn < Test_0000_Base
   # * Re-receive the same message
   # * Actually ACK the message
   # Expectation: no client errors, and no server crashes.
+
   def test_0030_ack_conn_no_ack
     received = no_ack_get()
     #
