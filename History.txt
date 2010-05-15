@@ -1,3 +1,9 @@
+== 1.0.2 / 14 May 2010
+
+* Continue to fix incompatabilities uncovered with gem rename.
+* Add session IDs to all log messages.
+* Remove some duplicate tests.
+
 == 1.0.1 / 25 Apr 2010
 
 * Ensure stompserver_ng and the older stompserver gems can coexist.

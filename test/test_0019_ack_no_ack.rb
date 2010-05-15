@@ -25,22 +25,6 @@ class Test_0019_Ack_No_Ack < Test_0000_Base
   def teardown
   end
 
-  # Test Ack No Ack:
-  # * Send a messsage
-  # * Subscribe with ack, and receive
-  # * Never send an ACK
-  # Expectation: no client errors, and no server crashes.
-  def test_0010_ack_no_ack
-    drainq(@queue_name)
-    #
-    open_client()
-    #
-    received = no_ack_get()
-    # But now, do _not_ ack the message, just close the client connection
-    close_client()
-    #
-  end
-
   # Test Ack No Ack Reget:
   # * Send a messsage
   # * Subscribe with ack, and receive

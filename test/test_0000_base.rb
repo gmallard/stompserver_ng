@@ -95,23 +95,5 @@ class Test_0000_Base < Test::Unit::TestCase
     @conn.subscribe(qname, headers, subId)
   end
 
-  # Drain existing queue before a test starts.
-  def drainq(qname)
-    drainer = Stomp::Client.open(@runparms[:userid],
-      @runparms[:password], 
-      @runparms[:host], 
-      @runparms[:port])
-    #
-    received = nil
-    receive_end = Time.now
-    drainer.subscribe(qname,
-     {"persistent" => true, "client-id" => "util_drainer"} ) do |message|
-      receive_end = Time.now
-      received = message
-    end
-    sleep 3.0 until received  || ((Time.now.to_i - receive_end.to_i) > 2.9)
-    #
-    drainer.close
-  end
 end # of class
 

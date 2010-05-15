@@ -99,14 +99,14 @@ class QueueManager
   #
   # stop
   #
-  def stop
-    @qstore.stop if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
+  def stop(session_id)
+    @qstore.stop(session_id) if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
   end
   #
   # subscribe
   #
   def subscribe(dest, connection, use_ack=false)
-    @@log.debug "QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}"
+    @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}"
     user = Struct::QueueUser.new(connection, use_ack)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
@@ -119,8 +119,7 @@ class QueueManager
   # Called from the ack method.
   #
   def send_a_backlog(connection)
-    @@log.debug "QM send_a_backlog starts"
-    @@log.debug("at_qcl: #{@queues.class}")
+    @@log.debug "#{connection.session_id} QM send_a_backlog starts"
     #
     # lookup queues with data for this connection
     #
@@ -140,11 +139,11 @@ class QueueManager
     # :startdoc:
 
     possible_queues = @queues.select{ |destination, users|
-      @qstore.message_for?(destination) &&
+      @qstore.message_for?(destination, connection.session_id) &&
         users.detect{|u| u.connection == connection}
     }
     if possible_queues.empty?
-      @@log.debug "QM  s_a_b nothing to send"
+      @@log.debug "#{connection.session_id} QM  s_a_b nothing to send"
       return
     end
     #
@@ -163,7 +162,7 @@ class QueueManager
 
     # :startdoc:
 
-    @@log.debug("possible_queues: #{possible_queues.inspect}")
+    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
 
 
     case possible_queues
@@ -187,14 +186,14 @@ class QueueManager
         user_index = rand(dest_data[1].size)     # Random index
         user = dest_data[1][user_index]  # Array entry from Hash table entry
       else
-        raise "something is very not right : #{RUBY_VERSION}"
+        raise "#{connection.session_id} something is very not right : #{RUBY_VERSION}"
     end
 
     #
-    @@log.debug "QM s_a_b chosen -> dest: #{dest}"
-    @@log.debug "QM s_a_b chosen -> user: #{user}"
+    @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
+    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
     #
-    frame = @qstore.dequeue(dest)
+    frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
   end
   #
@@ -203,16 +202,16 @@ class QueueManager
   # Called from the subscribe method.
   #
   def send_destination_backlog(dest,user)
-    @@log.debug "QM send_destination_backlog for #{dest}"
+    @@log.debug "#{user.connection.session_id} QM send_destination_backlog for #{dest}"
     if user.ack
       # only send one message (waiting for ack)
-      frame = @qstore.dequeue(dest)
+      frame = @qstore.dequeue(dest, user.connection.session_id)
       if frame
         send_to_user(frame, user)
-        @@log.debug("QM s_d_b single frame sent")
+        @@log.debug("#{user.connection.session_id} QM s_d_b single frame sent")
       end
     else
-      while frame = @qstore.dequeue(dest)
+      while frame = @qstore.dequeue(dest, user.connection.session_id)
         send_to_user(frame, user)
       end
     end
@@ -221,7 +220,7 @@ class QueueManager
   # unsubscribe
   #
   def unsubscribe(dest, connection)
-    @@log.debug "QM unsubscribe from #{dest}, connection: #{p connection}"
+    @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}, connection: #{p connection}"
     @queues.each do |d, queue|
       queue.delete_if { |qu| qu.connection == connection and d == dest}
     end
@@ -231,16 +230,16 @@ class QueueManager
   # ack
   #
   def ack(connection, frame)
-    @@log.debug "QM ACK for connection: #{connection.inspect}"
-    @@log.debug "QM ACK for frame: #{frame.inspect}"
+    @@log.debug "#{connection.session_id} QM ACK."
+    @@log.debug "#{connection.session_id} QM ACK for frame: #{frame.inspect}"
     unless @pending[connection]
-      @@log.debug "QM No message pending for connection!"
+      @@log.debug "#{connection.session_id} QM No message pending for connection!"
       return
     end
     msgid = frame.headers['message-id']
     p_msgid = @pending[connection].headers['message-id']
     if p_msgid != msgid
-      @@log.debug "QM ACK Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
+      @@log.debug "#{connection.session_id} QM ACK Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
       # We don't know what happened, we requeue
       # (probably a client connecting to a restarted server)
       frame = @pending[connection]
@@ -254,9 +253,9 @@ class QueueManager
   # disconnect
   #
   def disconnect(connection)
-    @@log.debug("QM DISCONNECT for connection: #{connection.inspect}")
+    @@log.debug("#{connection.session_id} QM DISCONNECT.")
     frame = @pending[connection]
-    @@log.debug("QM DISCONNECT pending frame: #{frame.inspect}")
+    @@log.debug("#{connection.session_id} QM DISCONNECT pending frame: #{frame.inspect}")
     if frame
       @qstore.requeue(frame.headers['destination'],frame)
       @pending.delete connection
@@ -271,10 +270,10 @@ class QueueManager
   # send_to_user
   #
   def send_to_user(frame, user)
-    @@log.debug("QM send_to_user")
+    @@log.debug("#{user.connection.session_id} QM send_to_user, #{user}")
     connection = user.connection
     if user.ack
-      raise "other connection's end already busy" if @pending[connection]
+      raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]
       @pending[connection] = frame
     end
     connection.stomp_send_data(frame)
@@ -282,8 +281,11 @@ class QueueManager
   #
   # sendmsg
   #
+  # Called only from the protocol handler, and called using Object#send.
+  #
   def sendmsg(frame)
-    @@log.debug("QM client SEND Processing")
+    #
+    @@log.debug("#{frame.headers['session']} QM client SEND Processing, #{frame}")
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
     # Lookup a user willing to handle this destination
@@ -313,8 +315,8 @@ class QueueManager
   #
   # For protocol handlers that want direct access to the queue
   #
-  def dequeue(dest)
-    @qstore.dequeue(dest)
+  def dequeue(dest, session_id)
+    @qstore.dequeue(dest, session_id)
   end
   #
   # enqueue
