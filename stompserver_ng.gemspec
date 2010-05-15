@@ -1,13 +1,13 @@
-(in /home/gallard/misc.code/stompserver_ng)
+(in /ad3/gma/home_ext/misc.code/stompserver_ng)
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
   s.name = %q{stompserver_ng}
-  s.version = "1.0.1"
+  s.version = "1.0.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Patrick Hurley", "Lionel Bouton", "snacktime", "gyver", "Mike Mangino", "robl", "gmallard"]
-  s.date = %q{2010-04-25}
+  s.date = %q{2010-05-14}
   s.default_executable = %q{stompserver_ng}
   s.description = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO
 queues, queue monitoring, and basic authentication.}
@@ -21,7 +21,7 @@ queues, queue monitoring, and basic authentication.}
   s.rubyforge_project = %q{stompserver_ng}
   s.rubygems_version = %q{1.3.5}
   s.summary = %q{Stomp messaging server with file/dbm/memory/activerecord based FIFO queues, queue monitoring, and basic authentication.}
-  s.test_files = ["test/noserver/test_queue_manager.rb", "test/noserver/test_stomp_frame.rb", "test/noserver/test_topic_manager.rb", "test/test_0000_base.rb", "test/test_0001_conn.rb", "test/test_0002_conn_sr.rb", "test/test_0006_client.rb", "test/test_0011_send_recv.rb", "test/test_0015_ack_conn.rb", "test/test_0017_ack_client.rb", "test/test_0019_ack_no_ack.rb", "test/test_0022_ack_noack_conn.rb", "test/test_0040_receipt_conn.rb"]
+  s.test_files = ["test/test_0017_ack_client.rb", "test/test_0011_send_recv.rb", "test/test_0006_client.rb", "test/test_0002_conn_sr.rb", "test/noserver/test_stomp_frame.rb", "test/noserver/test_queue_manager.rb", "test/noserver/test_topic_manager.rb", "test/test_0000_base.rb", "test/test_0019_ack_no_ack.rb", "test/test_0015_ack_conn.rb", "test/test_0040_receipt_conn.rb", "test/test_0022_ack_noack_conn.rb", "test/test_0001_conn.rb"]
 
   if s.respond_to? :specification_version then
     current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
@@ -32,19 +32,22 @@ queues, queue monitoring, and basic authentication.}
       s.add_runtime_dependency(%q<eventmachine>, [">= 0.12.10"])
       s.add_runtime_dependency(%q<hoe>, [">= 2.3.2"])
       s.add_runtime_dependency(%q<uuid>, [">= 2.1.0"])
-      s.add_development_dependency(%q<hoe>, [">= 2.3.3"])
+      s.add_development_dependency(%q<rubyforge>, [">= 2.0.4"])
+      s.add_development_dependency(%q<hoe>, [">= 2.6.0"])
     else
       s.add_dependency(%q<daemons>, [">= 1.0.10"])
       s.add_dependency(%q<eventmachine>, [">= 0.12.10"])
       s.add_dependency(%q<hoe>, [">= 2.3.2"])
       s.add_dependency(%q<uuid>, [">= 2.1.0"])
-      s.add_dependency(%q<hoe>, [">= 2.3.3"])
+      s.add_dependency(%q<rubyforge>, [">= 2.0.4"])
+      s.add_dependency(%q<hoe>, [">= 2.6.0"])
     end
   else
     s.add_dependency(%q<daemons>, [">= 1.0.10"])
     s.add_dependency(%q<eventmachine>, [">= 0.12.10"])
     s.add_dependency(%q<hoe>, [">= 2.3.2"])
     s.add_dependency(%q<uuid>, [">= 2.1.0"])
-    s.add_dependency(%q<hoe>, [">= 2.3.3"])
+    s.add_dependency(%q<rubyforge>, [">= 2.0.4"])
+    s.add_dependency(%q<hoe>, [">= 2.6.0"])
   end
 end

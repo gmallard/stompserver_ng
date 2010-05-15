@@ -6,7 +6,7 @@
 require 'rubygems'
 require 'hoe'
 $LOAD_PATH << "./lib"
-require 'stomp_server'
+require 'stomp_server_ng'
 
 Hoe.spec('stompserver_ng') do
   developer("Patrick Hurley", "phurley-blocked@rubyforge.org")
