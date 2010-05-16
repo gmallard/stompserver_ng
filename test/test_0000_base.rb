@@ -2,6 +2,7 @@ require 'rubygems'
 require 'stomp'
 require 'test/unit'
 require 'yaml'
+require 'timeout'
 #
 class Test_0000_Base < Test::Unit::TestCase
 
