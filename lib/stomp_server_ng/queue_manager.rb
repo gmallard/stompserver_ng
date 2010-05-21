@@ -270,7 +270,7 @@ class QueueManager
   # send_to_user
   #
   def send_to_user(frame, user)
-    @@log.debug("#{user.connection.session_id} QM send_to_user, #{user}")
+    @@log.debug("#{user.connection.session_id} QM send_to_user")
     connection = user.connection
     if user.ack
       raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]
