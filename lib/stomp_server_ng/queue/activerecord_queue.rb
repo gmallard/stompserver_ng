@@ -4,7 +4,7 @@
 ## they are indexed by 'stomp_id' which is the stomp 'message-id' header
 ## which must be unique accross all queues
 ##
-require 'stomp_server/queue/ar_message'
+require 'stomp_server_ng/queue/ar_message'
 require 'yaml'
 
 module StompServer
@@ -17,15 +17,15 @@ class ActiveRecordQueue
       'adapter' => 'sqlite3',
       'database' => "#{configdir}/stompserver_development"
     }
+    @@log = Logger::new(STDOUT)
+    @@log.level = StompServer::LogHelper.get_loglevel()
     # Load DB configuration
     db_config = "#{configdir}/database.yml"
-    puts "reading from #{db_config}"
+    @@log.debug "reading from #{db_config}"
     if File.exists? db_config
       db_params.merge! YAML::load(File.open(db_config))
     end
-
-    puts "using #{db_params['database']} DB"
-
+    @@log.debug("using #{db_params['database']} DB")
     # Setup activerecord
     ActiveRecord::Base.establish_connection(db_params)
     # Development <TODO> fix this

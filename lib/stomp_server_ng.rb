@@ -391,7 +391,7 @@ module StompServer
         qstore=StompServer::FileQueue.new(@opts[:storage])
         @@log.debug "Queue storage is FILE"
       elsif @opts[:queue] == 'activerecord'
-        require 'stomp_server/queue/activerecord_queue'
+        require 'stomp_server_ng/queue/activerecord_queue'
         qstore=StompServer::ActiveRecordQueue.new(@opts[:etcdir], @opts[:storage])
         @@log.debug "Queue storage is ActiveRecord"
       else
