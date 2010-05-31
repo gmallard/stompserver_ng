@@ -50,7 +50,7 @@ class ActiveRecordQueue
   end
 
   # Get and remove a frame from the queue
-  def dequeue(queue_name)
+  def dequeue(queue_name, session_id)
     return nil unless @frames[queue_name] && !@frames[queue_name][:frames].empty?
     frame = @frames[queue_name][:frames].shift
     remove_from_store(frame.headers['message-id'])
@@ -75,7 +75,7 @@ class ActiveRecordQueue
     ArMessage.create!(:stomp_id => msgid, :frame => frame)
   end
 
-  def message_for?(queue_name)
+  def message_for?(queue_name, session_id)
     @frames[queue_name] && !@frames[queue_name][:frames].empty?
   end
 
