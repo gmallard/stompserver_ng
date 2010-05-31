@@ -20,17 +20,24 @@ class ActiveRecordQueue
     @@log = Logger::new(STDOUT)
     @@log.level = StompServer::LogHelper.get_loglevel()
     # Load DB configuration
+    # :TODO: The default location of the database.yml file needs to be reviewed,
+    # and probably changed.
     db_config = "#{configdir}/database.yml"
+    # db_config = "./etc/database.yml"
     @@log.debug "reading from #{db_config}"
     if File.exists? db_config
+      @@log.debug("File #{db_config} exists.")
       db_params.merge! YAML::load(File.open(db_config))
     end
-    @@log.debug("using #{db_params['database']} DB")
+    @@log.debug("using DB: #{db_params.inspect}")
     # Setup activerecord
     ActiveRecord::Base.establish_connection(db_params)
+    @@log.debug("connection complete")
+
     # Development <TODO> fix this
     ActiveRecord::Base.logger = Logger.new(STDERR)
     ActiveRecord::Base.logger.level = Logger::INFO
+
     # we need the connection, it can't be done earlier
     ArMessage.reset_column_information
     reload_queues
