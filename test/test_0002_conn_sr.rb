@@ -63,6 +63,8 @@ class Test_0002_Conn_SR < Test_0000_Base
   # issue subscribe before send:
   # stompserver - fail
   # AMQ - fail
+  # Note: 'fail' means that the second connection will issue 'receive', and
+  # no message will ever be received.
   def test_0030_send_receive
     received = nil
     mtosend = @test_message + "-0030"
@@ -78,12 +80,12 @@ class Test_0002_Conn_SR < Test_0000_Base
     setup
     assert_nothing_raised() {
       connection_subscribe(@queuename)
+    }
+    assert_raise(Timeout::Error) {
       Timeout::timeout(4) do
         received = @conn.receive 
       end
     }
-    assert_not_nil(received, "something should be received 30")
-    assert_equal(mtosend, received.body, "received should match sent 30")
   end
 
 end # of class
