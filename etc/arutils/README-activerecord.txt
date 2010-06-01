@@ -35,10 +35,10 @@ in Rails projects.
 You can specify activerecord use by either:
 
 * the main stompserver_ng configuration file
-** :queue: activerecord
+* :queue: activerecord
 * command line option when stompserver_ng starts
-** -q activerecord
-** --queuetype=activerecord
+* -q activerecord
+* --queuetype=activerecord
 
 == Default Activerecord Environment
 
@@ -60,10 +60,10 @@ the default.
 You can override activerecord connection parameters by either:
 
 * the main stompserver_ng configuration file
-** :dbyml: some/directory/mydb.yml
+* :dbyml: some/directory/mydb.yml
 * command line option when stompserver_ng starts
-** -y some/directory/mydb.yml
-** --dbyml=some/directory/mydb.yml
+* -y some/directory/mydb.yml
+* --dbyml=some/directory/mydb.yml
 
 == Activerecord Support
 
