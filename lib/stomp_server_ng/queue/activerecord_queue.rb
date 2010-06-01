@@ -4,33 +4,38 @@
 ## they are indexed by 'stomp_id' which is the stomp 'message-id' header
 ## which must be unique accross all queues
 ##
-require 'stomp_server/queue/ar_message'
+require 'stomp_server_ng/queue/ar_message'
 require 'yaml'
 
 module StompServer
 class ActiveRecordQueue
   attr_accessor :checkpoint_interval
 
-  def initialize(configdir, storagedir)
+  def initialize(configdir, storagedir, db_ymlfile)
     # Default configuration, use SQLite for simplicity
     db_params = {
       'adapter' => 'sqlite3',
       'database' => "#{configdir}/stompserver_development"
     }
+    @@log = Logger::new(STDOUT)
+    @@log.level = StompServer::LogHelper.get_loglevel()
     # Load DB configuration
-    db_config = "#{configdir}/database.yml"
-    puts "reading from #{db_config}"
-    if File.exists? db_config
-      db_params.merge! YAML::load(File.open(db_config))
+    @@log.debug "trying to read from #{db_ymlfile}"
+    if File.exists? db_ymlfile
+      @@log.debug("File #{db_ymlfile} exists.")
+      db_params.merge! YAML::load(File.open(db_ymlfile))
+    else
+      @@log.warn("File #{db_ymlfile} not found, using sqlite3 default.")
     end
-
-    puts "using #{db_params['database']} DB"
-
+    @@log.debug("using DB params: #{db_params.inspect}")
     # Setup activerecord
     ActiveRecord::Base.establish_connection(db_params)
-    # Development <TODO> fix this
-    ActiveRecord::Base.logger = Logger.new(STDERR)
-    ActiveRecord::Base.logger.level = Logger::INFO
+    @@log.debug("connection complete")
+
+    # AR Logger
+    ActiveRecord::Base.logger = Logger.new(STDOUT)
+    ActiveRecord::Base.logger.level = StompServer::LogHelper.get_loglevel()
+
     # we need the connection, it can't be done earlier
     ArMessage.reset_column_information
     reload_queues
@@ -50,7 +55,7 @@ class ActiveRecordQueue
   end
 
   # Get and remove a frame from the queue
-  def dequeue(queue_name)
+  def dequeue(queue_name, session_id)
     return nil unless @frames[queue_name] && !@frames[queue_name][:frames].empty?
     frame = @frames[queue_name][:frames].shift
     remove_from_store(frame.headers['message-id'])
@@ -75,7 +80,7 @@ class ActiveRecordQueue
     ArMessage.create!(:stomp_id => msgid, :frame => frame)
   end
 
-  def message_for?(queue_name)
+  def message_for?(queue_name, session_id)
     @frames[queue_name] && !@frames[queue_name][:frames].empty?
   end
 

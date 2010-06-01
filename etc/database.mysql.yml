@@ -1,0 +1,9 @@
+adapter: mysql
+encoding: utf8
+database: ssng_dev
+pool: 5
+username: ssng
+password: xxxxxxxx
+host: localhost
+port: 3306
+
