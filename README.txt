@@ -87,7 +87,7 @@ enqueued: 300
 === Access control
 
 Basic client authorization is also supported.  If the -a flag is
-passed to stompserver on startup, and a .passwd file exists in the run
+passed to stompserver_ng on startup, and a .passwd file exists in the run
 directory, then clients will be required to provide a valid login and
 passcode.  See passwd.example for the password file format.
 
@@ -100,9 +100,9 @@ the next restart.
 
 == INSTALL:
 
-* gem install stompserver
+* gem install stompserver_ng
 
-stompserver will create a log, etc, and storage directory on startup
+stompserver_ng will create a log, etc, and storage directory on startup
 in your current working directory, the value passed to as
 --working_dir parameter, or if using a config file it will
 use what you specified for working_dir.  The configuration file is a
@@ -113,26 +113,26 @@ Command line options will override options set in the yaml config
 file.
 
 To use the memory queue run as follows:
-  stompserver -p 61613 -b 0.0.0.0
+  stompserver_ng -p 61613 -b 0.0.0.0
 
 To use the file or dbm queue storage, use the -q switch and specificy
 either file or dbm.  The file and dbm queues also take a storage
 directory specified with -s.  .stompserver is the default directory if
 -s is not used.
-  stompserver -p 61613 -b 0.0.0.0 -q file -s .stompfile
+  stompserver_ng -p 61613 -b 0.0.0.0 -q file -s .stompfile
 Or
-  stompserver -p 61613 -b 0.0.0.0 -q dbm -s .stompbdb
+  stompserver_ng -p 61613 -b 0.0.0.0 -q dbm -s .stompbdb
 
 To specify where the queue is stored on disk, use the -s flag followed
 by a storage directory.  To enable client authorization use -a, for
 debugging use -d.
-  stompserver -p 61613 -b 0.0.0.0 -q file -s .stompserver -a -d
+  stompserver_ng -p 61613 -b 0.0.0.0 -q file -s .stompserver -a -d
 
 You cannot use the same storage directory for a file and dbm queue,
 they must be kept separate.
 
 To use the activerecord queue storage use -q activerecord:
-  stompserver -p 61613 -b 0.0.0.0 -q activerecord
+  stompserver_ng -p 61613 -b 0.0.0.0 -q activerecord
 It will try to read the etc/database.yml file in the working
 directory. Here's an example of a database.yml for a PostgreSQL
 database named stompserver on the 'dbserver' host usable by
