@@ -10,6 +10,14 @@ client/consume.rb
 client/send.rb
 config/stompserver_ng.conf
 etc/19xcompat/notes.rdoc
+etc/arutils/README-activerecord.txt
+etc/arutils/cre_mysql.rb
+etc/arutils/cre_postgres.rb
+etc/arutils/cre_sqlite3.rb
+etc/arutils/mysql_boot.sql
+etc/arutils/postgres_boot.sql
+etc/database.mysql.yml
+etc/database.postgres.yml
 etc/passwd.example
 etc/ppqinfo.rb
 etc/runserver.sh
