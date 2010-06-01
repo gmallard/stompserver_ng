@@ -376,7 +376,10 @@ class Stomp < EventMachine::Connection
   # 
   def stomp_receive_data(data)
     begin
-      @@log.debug "#{@session_id} receive_data: #{data.inspect}"
+      # limit log message length
+      logdata = data
+      logdata = data[0..256] + "...truncated..." if data.length > 256
+      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
       @sfr << data
       process_frames
     rescue Exception => e

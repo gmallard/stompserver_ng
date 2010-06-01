@@ -14,7 +14,7 @@ require 'stomp_server_ng/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '1.0.2'
+  VERSION = '1.0.3'
   #
   # session ID cache manager
   #
@@ -156,6 +156,7 @@ module StompServer
         :storage => ".stompserver",     # -s
         :session_cache => 0,            # -S
         :working_dir => Dir.getwd,      # -w
+        :dbyml => 'database.yml',       # -y
         :daemon => false                # -z
       }
       # Get a crude logger
@@ -264,6 +265,11 @@ module StompServer
         "Change the working directory (default: current directory)") {|s| 
         hopts[:working_dir] = s}
 
+      # :dbyml
+      opts_parser.on("-y", "--dbyml=YMLFILE", String, 
+        "Database .yml file name (default: database.yml)") {|y| 
+        hopts[:dbyml] = y}
+
       # :daemon
       opts_parser.on("-z", "--daemon", String, 
         "Daemonize server process") {|d| 
@@ -313,6 +319,12 @@ module StompServer
       opts[:logdir] = File.join(opts[:working_dir],opts[:logdir])   # Override! ':logdir'
       opts[:logfile] = File.join(opts[:logdir],opts[:logfile])      # Override! ':logfile'
       opts[:pidfile] = File.join(opts[:logdir],opts[:pidfile])      # Override! ':pidfile'
+      # :dbyml will be a full path and file name
+      unless File.exists?(File.expand_path(opts[:dbyml]))
+        opts[:dbyml] = File.join(opts[:etcdir],opts[:dbyml])        # Override! ':dbyml'
+      else
+        opts[:dbyml] = File.expand_path(opts[:dbyml])
+      end
 
       # Authorization - working file
       if opts[:auth]
@@ -391,8 +403,8 @@ module StompServer
         qstore=StompServer::FileQueue.new(@opts[:storage])
         @@log.debug "Queue storage is FILE"
       elsif @opts[:queue] == 'activerecord'
-        require 'stomp_server/queue/activerecord_queue'
-        qstore=StompServer::ActiveRecordQueue.new(@opts[:etcdir], @opts[:storage])
+        require 'stomp_server_ng/queue/activerecord_queue'
+        qstore=StompServer::ActiveRecordQueue.new(@opts[:etcdir], @opts[:storage], @opts[:dbyml])
         @@log.debug "Queue storage is ActiveRecord"
       else
         qstore=StompServer::MemoryQueue.new
