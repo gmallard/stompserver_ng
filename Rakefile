@@ -8,6 +8,12 @@ require 'hoe'
 $LOAD_PATH << "./lib"
 require 'stomp_server_ng'
 
+begin
+  require "hanna/rdoctask"
+rescue LoadError => e
+  require "rake/rdoctask"
+end
+
 Hoe.spec('stompserver_ng') do
   developer("Patrick Hurley", "phurley-blocked@rubyforge.org")
   developer("Lionel Bouton", "lionel-dev@bouton.name")
