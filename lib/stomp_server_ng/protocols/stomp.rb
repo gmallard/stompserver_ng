@@ -348,13 +348,6 @@ class Stomp < EventMachine::Connection
     stomp_send_data(response)
   end
   #
-  # send_message
-  #
-  def send_message(msg)
-    msg.command = "MESSAGE"
-    stomp_send_data(msg)
-  end
-  #
   # send_receipt
   # 
   def send_receipt(id)
