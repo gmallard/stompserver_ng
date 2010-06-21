@@ -1,10 +1,13 @@
 #
-# = Queue Monitor
+#
 #
 module StompServer
+#
+# = Queue Monitor
+#
 class QueueMonitor
   #
-  # initialize
+  # Initialize the queue monitor.
   #
   def initialize(qstore,queues)
     @qstore = qstore
@@ -17,14 +20,15 @@ class QueueMonitor
     #
   end
   #
-  # start
+  # Start monitor timer.
   #
   def start
     count =0
     EventMachine::add_periodic_timer 5, proc {count+=1; monitor(count) }
   end
   #
-  # monitor
+  # Respond to calls from the timer.  Do nothing if no clients are connected
+  # to the '/queue/monitor' destination.
   #
   def monitor(count)
     return unless (@qstore.methods.include?(:monitor) | @qstore.methods.include?('monitor'))
