@@ -389,19 +389,6 @@ class Stomp < EventMachine::Connection
     end
   end 
   #
-  # stomp_receive_frame
-  #
-  def stomp_receive_frame(frame)
-    begin
-      @@log.debug "#{@session_id} receive_frame: #{frame.inspect}"
-      process_frame(frame)
-    rescue Exception => e
-      @@log.error "#{@session_id} #{self} err: #{e} #{e.backtrace.join("\n")}"
-      send_error(e.to_s)
-      close_connection_after_writing
-    end
-  end
-  #
   # stomp_send_data
   #
   def stomp_send_data(frame)
