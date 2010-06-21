@@ -9,9 +9,7 @@ VALID_COMMANDS = [
   :commit,        # Explicit method supplied
   :connect,       # Explicit method supplied
   :disconnect,    # Explicit method supplied
-  :send,          # No method supplied.  The <tt>EM::Connection.receive_data</tt>
-                  # method delegates the SEND verb to the 
-                  # <tt>stomp_receive_data</tt> helper method.
+  :send,          # Explicit method supplied
   :subscribe,     # Explicit method supplied
   :unsubscribe    # Explicit method supplied
 ]
@@ -239,19 +237,26 @@ class Stomp < EventMachine::Connection
     @@log.warn "#{@session_id} Polite disconnect"
     close_connection_after_writing
   end
-
-  # :stopdoc:
-
   #
   # Stomp Protocol - SEND
   #
-  # No method supplied. The stomp SEND verb is handled from the 
-  # receive_data(data) method which delegates to
-  # the <tt>stomp_receive_data</tt> method.
+  # The stomp SEND verb is by routing through:
   #
-
-  # :startdoc:
-
+  # * receive_data(data)
+  # * stomp_receive_data
+  # * process_frames
+  # * process_frame
+  # * use Object#__send__ to call this method
+  #
+  def send(frame)
+    # set message id
+    if frame.dest.match(%r|^/queue|)
+      @@queue_manager.sendmsg(frame)
+    else
+      frame.headers['message-id'] = "msg-#stompcma-#{@@topic_manager.next_index}"
+      @@topic_manager.sendmsg(frame)
+    end
+  end
   #
   #
   # Stomp Protocol - SUBSCRIBE
@@ -285,26 +290,42 @@ class Stomp < EventMachine::Connection
   # Helper methods
 
   # :startdoc:
-
   #
-  # connected?
+  # stomp_receive_data
   #
-  def connected?
-    @connected
-  end
+  # Called from <tt>EM::Connection.receive_data(data)</tt>.  This is where
+  # we begin processing a set of data fresh off the wire.
+  # 
+  def stomp_receive_data(data)
+    begin
+      # Limit log message length.
+      logdata = data
+      logdata = data[0..256] + "...truncated..." if data.length > 256
+      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
+      # Append all data to the recognizer buffer.
+      @sfr << data
+      # Process any stomp frames in this set of data.
+      process_frames
+    rescue Exception => e
+      @@log.error "#{@session_id} err: #{e} #{e.backtrace.join("\n")}"
+      send_error(e.to_s)
+      close_connection_after_writing
+    end
+  end 
   #
-  # handle_transaction  
+  # process_frames
   #
-  def handle_transaction(frame, trans, cmd)
-    if [:begin, :commit, :abort].include?(cmd)
-      send(cmd, frame, trans) # WARNING: call Object#send !!!
-    else
-      raise "#{@session_id} transaction does not exist" unless @transactions.has_key?(trans)
-      @transactions[trans] << frame
-    end    
+  # Handle all stomp frames currently in the recognizer's accumulated
+  # array of frames.
+  #
+  def process_frames
+    frame = nil
+    process_frame(frame) while frame = @sfr.frames.shift
   end
   #
   # process_frame
+  #
+  # Process and individual stomp frame.
   #
   def process_frame(frame)
     cmd = frame.command.downcase.to_sym
@@ -316,24 +337,29 @@ class Stomp < EventMachine::Connection
     # Send receipt first if required
     send_receipt(frame.headers['receipt']) if frame.headers['receipt']
     #
-    # I really like this code, but my needs are a little trickier
-    # 
     if trans = frame.headers['transaction']
+      # Handle transactional frame if required.
       handle_transaction(frame, trans, cmd)
     else
-      cmd = :sendmsg if cmd == :send
-      send(cmd, frame) # WARNING: call Object#send !!!
+      # Otherwise, just route the non-transactional frame.
+      __send__(cmd, frame) # Object#send alias call
     end
   end
   #
-  # process_frames
+  # handle_transaction  
   #
-  def process_frames
-    frame = nil
-    process_frame(frame) while frame = @sfr.frames.shift
+  def handle_transaction(frame, trans, cmd)
+    if [:begin, :commit, :abort].include?(cmd)
+      __send__(cmd, frame, trans) # Object#send alias call
+    else
+      raise "#{@session_id} transaction does not exist" unless @transactions.has_key?(trans)
+      @transactions[trans] << frame
+    end    
   end
   #
   # send_error
+  #
+  # Send a single error frame.
   #
   def send_error(msg)
     send_frame("ERROR",{'message' => 'See below'},msg)
@@ -341,65 +367,20 @@ class Stomp < EventMachine::Connection
   #
   # send_frame
   #
+  # Send an individual stomp frame.
+  #
   def send_frame(command, headers={}, body='')
     headers['content-length'] = body.size.to_s
     response = StompServer::StompFrame.new(command, headers, body)
     stomp_send_data(response)
   end
   #
-  # send_message
-  #
-  def send_message(msg)
-    msg.command = "MESSAGE"
-    stomp_send_data(msg)
-  end
-  #
   # send_receipt
+  #
+  # Send a single receipt frame.
   # 
   def send_receipt(id)
     send_frame("RECEIPT", { 'receipt-id' => id})
-  end
-  #
-  # sendmsg
-  #
-  def sendmsg(frame)
-    # set message id
-    if frame.dest.match(%r|^/queue|)
-      @@queue_manager.sendmsg(frame)
-    else
-      frame.headers['message-id'] = "msg-#stompcma-#{@@topic_manager.next_index}"
-      @@topic_manager.sendmsg(frame)
-    end
-  end
-  #
-  # stomp_receive_data
-  # 
-  def stomp_receive_data(data)
-    begin
-      # limit log message length
-      logdata = data
-      logdata = data[0..256] + "...truncated..." if data.length > 256
-      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
-      @sfr << data
-      process_frames
-    rescue Exception => e
-      @@log.error "#{@session_id} err: #{e} #{e.backtrace.join("\n")}"
-      send_error(e.to_s)
-      close_connection_after_writing
-    end
-  end 
-  #
-  # stomp_receive_frame
-  #
-  def stomp_receive_frame(frame)
-    begin
-      @@log.debug "#{@session_id} receive_frame: #{frame.inspect}"
-      process_frame(frame)
-    rescue Exception => e
-      @@log.error "#{@session_id} #{self} err: #{e} #{e.backtrace.join("\n")}"
-      send_error(e.to_s)
-      close_connection_after_writing
-    end
   end
   #
   # stomp_send_data

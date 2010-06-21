@@ -1,86 +1,44 @@
-# QueueManager is used in conjunction with a storage class.  
-# The storage class MUST implement the following two methods:
 #
-# - enqueue(queue name, frame)
+# = QueueManager 
+#
+# Used in conjunction with a storage class.  
+#
+# The storage class MUST implement the following methods:
+#
+# * enqueue(queue name, frame)
+#
 # enqueue pushes a frame to the top of the queue in FIFO order. It's return 
 # value is ignored. enqueue must also set the message-id and add it to the 
 # frame header before inserting the frame into the queue.
 #
-# - dequeue(queue name)
-# dequeue removes a frame from the bottom of the queue and returns it.
+# * dequeue(queue name)
 #
-# - requeue(queue name,frame)
-# does the same as enqueue, except it @@log.debug the from at the bottom of 
-# the queue
+# removes a frame from the bottom of the queue and returns it.
 #
-# The storage class MAY implement the stop() method which can be used to do 
-# any housekeeping that needs to be done before stompserver shuts down. 
+# * requeue(queue name,frame)
+#
+# does the same as enqueue, except it pushes the given frame to the 
+# bottom of the queue.
+#
+# The storage class MAY implement the following methods:
+#
+# * stop() method which should
+#
+# do any housekeeping that needs to be done before stompserver shuts down. 
 # stop() will be called when stompserver is shut down.
 #
-# The storage class MAY implement the monitor() method.  monitor() should 
+# * monitor() method which should
+#
 # return a hash of hashes containing the queue statistics.
 # See the file queue for an example. Statistics are available to clients 
 # in /queue/monitor.
 #
 module StompServer
 #
-#
-#
-class QueueMonitor
-  #
-  # initialize
-  #
-  def initialize(qstore,queues)
-    @qstore = qstore
-    @queues = queues
-    @stompid = StompServer::StompId.new
-    #
-    @@log = Logger.new(STDOUT)
-    @@log.level = StompServer::LogHelper.get_loglevel()
-    @@log.debug("QueueMonitor initialize comletes")
-    #
-  end
-  #
-  # start
-  #
-  def start
-    count =0
-    EventMachine::add_periodic_timer 5, proc {count+=1; monitor(count) }
-  end
-  #
-  # monitor
-  #
-  def monitor(count)
-    return unless (@qstore.methods.include?(:monitor) | @qstore.methods.include?('monitor'))
-    users = @queues['/queue/monitor']
-    return if users.size == 0
-    stats = @qstore.monitor
-    return if stats.size == 0
-    body = ''
-    #
-    stats.each do |queue,qstats|
-      body << "Queue: #{queue}\n"
-      qstats.each {|stat,value| body << "#{stat}: #{value}\n"}
-      body << "\n"
-    end
-    #
-    headers = {
-      'message-id' => @stompid[count],
-      'destination' => '/queue/monitor',
-      'content-length' => body.size.to_s
-    }
-    #
-    frame = StompServer::StompFrame.new('MESSAGE', headers, body)
-    users.each {|user| user.connection.stomp_send_data(frame)}
-  end
-end
-#
-#
-#
 class QueueManager
   Struct::new('QueueUser', :connection, :ack)
   #
-  # initialize
+  # Queue manager initialization.
   #
   def initialize(qstore)
     @@log = Logger.new(STDOUT)
@@ -97,13 +55,15 @@ class QueueManager
     end
   end
   #
-  # stop
+  # Server stop / shutdown.
   #
   def stop(session_id)
     @qstore.stop(session_id) if (@qstore.methods.include?('stop') || @qstore.methods.include?(:stop))
   end
   #
-  # subscribe
+  # Client subscribe for a destination.
+  #
+  # Called from the protocol handler (subscribe method).
   #
   def subscribe(dest, connection, use_ack=false)
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}"
@@ -204,20 +164,23 @@ class QueueManager
   def send_destination_backlog(dest,user)
     @@log.debug "#{user.connection.session_id} QM send_destination_backlog for #{dest}"
     if user.ack
-      # only send one message (waiting for ack)
+      # Only send one message, then wait for client ACK.
       frame = @qstore.dequeue(dest, user.connection.session_id)
       if frame
         send_to_user(frame, user)
         @@log.debug("#{user.connection.session_id} QM s_d_b single frame sent")
       end
     else
+      # Send all available messages.
       while frame = @qstore.dequeue(dest, user.connection.session_id)
         send_to_user(frame, user)
       end
     end
   end
   #
-  # unsubscribe
+  # Client unsubscribe.
+  #
+  # Called from the protocol handler (unsubscribe method).
   #
   def unsubscribe(dest, connection)
     @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}, connection: #{p connection}"
@@ -227,7 +190,9 @@ class QueueManager
     @queues.delete(dest) if @queues[dest].empty?
   end
   #
-  # ack
+  # Client ack.
+  #
+  # Called from the protocol handler (ack method).
   #
   def ack(connection, frame)
     @@log.debug "#{connection.session_id} QM ACK."
@@ -250,7 +215,9 @@ class QueueManager
     send_a_backlog(connection)
   end
   #
-  # disconnect
+  # Client disconnect.
+  #
+  # Called from the protocol handler (unbind method).
   #
   def disconnect(connection)
     @@log.debug("#{connection.session_id} QM DISCONNECT.")
@@ -273,7 +240,9 @@ class QueueManager
     @@log.debug("#{user.connection.session_id} QM send_to_user")
     connection = user.connection
     if user.ack
+      # raise on internal logic error.
       raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]
+      # A maximum of one frame can be pending ACK.
       @pending[connection] = frame
     end
     connection.stomp_send_data(frame)
@@ -281,7 +250,7 @@ class QueueManager
   #
   # sendmsg
   #
-  # Called only from the protocol handler, and called using Object#send.
+  # Called from the protocol handler (sendmsg method, process_frame method).
   #
   def sendmsg(frame)
     #
@@ -311,15 +280,13 @@ class QueueManager
     end
   end
   #
-  # dequeue
-  #
-  # For protocol handlers that want direct access to the queue
+  # dequeue: remove a message from a queue.
   #
   def dequeue(dest, session_id)
     @qstore.dequeue(dest, session_id)
   end
   #
-  # enqueue
+  # enqueue: add a message to a queue.
   #
   def enqueue(frame)
     frame.command = "MESSAGE"
