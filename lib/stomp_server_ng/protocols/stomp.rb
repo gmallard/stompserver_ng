@@ -294,12 +294,6 @@ class Stomp < EventMachine::Connection
   # :startdoc:
 
   #
-  # connected?
-  #
-  def connected?
-    @connected
-  end
-  #
   # handle_transaction  
   #
   def handle_transaction(frame, trans, cmd)
