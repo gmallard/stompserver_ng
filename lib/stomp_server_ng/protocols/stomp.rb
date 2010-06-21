@@ -292,7 +292,62 @@ class Stomp < EventMachine::Connection
   # Helper methods
 
   # :startdoc:
-
+  #
+  # stomp_receive_data
+  #
+  # Called from <tt>EM::Connection.receive_data(data)</tt>.  This is where
+  # we begin processing a set of data fresh off the wire.
+  # 
+  def stomp_receive_data(data)
+    begin
+      # Limit log message length.
+      logdata = data
+      logdata = data[0..256] + "...truncated..." if data.length > 256
+      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
+      # Append all data to the recognizer buffer.
+      @sfr << data
+      # Process any stomp frames in this set of data.
+      process_frames
+    rescue Exception => e
+      @@log.error "#{@session_id} err: #{e} #{e.backtrace.join("\n")}"
+      send_error(e.to_s)
+      close_connection_after_writing
+    end
+  end 
+  #
+  # process_frames
+  #
+  # Handle all stomp frames currently in the recognizer's accumulated
+  # array of frames.
+  #
+  def process_frames
+    frame = nil
+    process_frame(frame) while frame = @sfr.frames.shift
+  end
+  #
+  # process_frame
+  #
+  # Process and individual stomp frame.
+  #
+  def process_frame(frame)
+    cmd = frame.command.downcase.to_sym
+    raise "#{@session_id} #{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
+    raise "#{@session_id} #{self} Not connected" if !@connected && cmd != :connect
+    @@log.debug("#{@session_id} process_frame: #{frame.command}")
+    # Add session ID to the frame headers
+    frame.headers['session'] = @session_id
+    # Send receipt first if required
+    send_receipt(frame.headers['receipt']) if frame.headers['receipt']
+    #
+    if trans = frame.headers['transaction']
+      # Handle transactional frame if required.
+      handle_transaction(frame, trans, cmd)
+    else
+      # Otherwise, just route the non-transactional frame.
+      cmd = :sendmsg if cmd == :send
+      send(cmd, frame) # WARNING: call Object#send !!!
+    end
+  end
   #
   # handle_transaction  
   #
@@ -305,42 +360,17 @@ class Stomp < EventMachine::Connection
     end    
   end
   #
-  # process_frame
-  #
-  def process_frame(frame)
-    cmd = frame.command.downcase.to_sym
-    raise "#{@session_id} #{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
-    raise "#{@session_id} #{self} Not connected" if !@connected && cmd != :connect
-    @@log.debug("#{@session_id} process_frame: #{frame.command}")
-    # Add session ID to the frame headers
-    frame.headers['session'] = @session_id
-    # Send receipt first if required
-    send_receipt(frame.headers['receipt']) if frame.headers['receipt']
-    #
-    # I really like this code, but my needs are a little trickier
-    # 
-    if trans = frame.headers['transaction']
-      handle_transaction(frame, trans, cmd)
-    else
-      cmd = :sendmsg if cmd == :send
-      send(cmd, frame) # WARNING: call Object#send !!!
-    end
-  end
-  #
-  # process_frames
-  #
-  def process_frames
-    frame = nil
-    process_frame(frame) while frame = @sfr.frames.shift
-  end
-  #
   # send_error
+  #
+  # Send a single error frame.
   #
   def send_error(msg)
     send_frame("ERROR",{'message' => 'See below'},msg)
   end
   #
   # send_frame
+  #
+  # Send an individual stomp frame.
   #
   def send_frame(command, headers={}, body='')
     headers['content-length'] = body.size.to_s
@@ -349,27 +379,12 @@ class Stomp < EventMachine::Connection
   end
   #
   # send_receipt
+  #
+  # Send a single receipt frame.
   # 
   def send_receipt(id)
     send_frame("RECEIPT", { 'receipt-id' => id})
   end
-  #
-  # stomp_receive_data
-  # 
-  def stomp_receive_data(data)
-    begin
-      # limit log message length
-      logdata = data
-      logdata = data[0..256] + "...truncated..." if data.length > 256
-      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
-      @sfr << data
-      process_frames
-    rescue Exception => e
-      @@log.error "#{@session_id} err: #{e} #{e.backtrace.join("\n")}"
-      send_error(e.to_s)
-      close_connection_after_writing
-    end
-  end 
   #
   # stomp_send_data
   #
