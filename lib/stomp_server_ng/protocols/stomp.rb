@@ -239,19 +239,26 @@ class Stomp < EventMachine::Connection
     @@log.warn "#{@session_id} Polite disconnect"
     close_connection_after_writing
   end
-
-  # :stopdoc:
-
   #
   # Stomp Protocol - SEND
   #
-  # No method supplied. The stomp SEND verb is handled from the 
-  # receive_data(data) method which delegates to
-  # the <tt>stomp_receive_data</tt> method.
+  # No direct method supplied. The stomp SEND verb is by routing through:
   #
-
-  # :startdoc:
-
+  # * receive_data(data)
+  # * stomp_receive_data
+  # * process_frames
+  # * process_frame
+  # * :send is translated to :sendmsg
+  #
+  def sendmsg(frame)
+    # set message id
+    if frame.dest.match(%r|^/queue|)
+      @@queue_manager.sendmsg(frame)
+    else
+      frame.headers['message-id'] = "msg-#stompcma-#{@@topic_manager.next_index}"
+      @@topic_manager.sendmsg(frame)
+    end
+  end
   #
   #
   # Stomp Protocol - SUBSCRIBE
@@ -358,18 +365,6 @@ class Stomp < EventMachine::Connection
   # 
   def send_receipt(id)
     send_frame("RECEIPT", { 'receipt-id' => id})
-  end
-  #
-  # sendmsg
-  #
-  def sendmsg(frame)
-    # set message id
-    if frame.dest.match(%r|^/queue|)
-      @@queue_manager.sendmsg(frame)
-    else
-      frame.headers['message-id'] = "msg-#stompcma-#{@@topic_manager.next_index}"
-      @@topic_manager.sendmsg(frame)
-    end
   end
   #
   # stomp_receive_data
