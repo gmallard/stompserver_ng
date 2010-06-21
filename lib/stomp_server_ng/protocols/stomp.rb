@@ -9,9 +9,7 @@ VALID_COMMANDS = [
   :commit,        # Explicit method supplied
   :connect,       # Explicit method supplied
   :disconnect,    # Explicit method supplied
-  :send,          # No method supplied.  The <tt>EM::Connection.receive_data</tt>
-                  # method delegates the SEND verb to the 
-                  # <tt>stomp_receive_data</tt> helper method.
+  :send,          # Explicit method supplied
   :subscribe,     # Explicit method supplied
   :unsubscribe    # Explicit method supplied
 ]
@@ -242,15 +240,15 @@ class Stomp < EventMachine::Connection
   #
   # Stomp Protocol - SEND
   #
-  # No direct method supplied. The stomp SEND verb is by routing through:
+  # The stomp SEND verb is by routing through:
   #
   # * receive_data(data)
   # * stomp_receive_data
   # * process_frames
   # * process_frame
-  # * :send is translated to :sendmsg
+  # * use Object#__send__ to call this method
   #
-  def sendmsg(frame)
+  def send(frame)
     # set message id
     if frame.dest.match(%r|^/queue|)
       @@queue_manager.sendmsg(frame)
@@ -344,8 +342,7 @@ class Stomp < EventMachine::Connection
       handle_transaction(frame, trans, cmd)
     else
       # Otherwise, just route the non-transactional frame.
-      cmd = :sendmsg if cmd == :send
-      send(cmd, frame) # WARNING: call Object#send !!!
+      __send__(cmd, frame) # Object#send alias call
     end
   end
   #
@@ -353,7 +350,7 @@ class Stomp < EventMachine::Connection
   #
   def handle_transaction(frame, trans, cmd)
     if [:begin, :commit, :abort].include?(cmd)
-      send(cmd, frame, trans) # WARNING: call Object#send !!!
+      __send__(cmd, frame, trans) # Object#send alias call
     else
       raise "#{@session_id} transaction does not exist" unless @transactions.has_key?(trans)
       @transactions[trans] << frame
