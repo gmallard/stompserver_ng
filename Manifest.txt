@@ -26,6 +26,7 @@ etc/stompserver_ng.conf
 lib/stomp_server_ng.rb
 lib/stomp_server_ng/protocols/http.rb
 lib/stomp_server_ng/protocols/stomp.rb
+lib/stomp_server_ng/qmonitor.rb
 lib/stomp_server_ng/queue.rb
 lib/stomp_server_ng/queue/activerecord_queue.rb
 lib/stomp_server_ng/queue/ar_message.rb
@@ -36,6 +37,7 @@ lib/stomp_server_ng/queue/memory_queue.rb
 lib/stomp_server_ng/queue_manager.rb
 lib/stomp_server_ng/stomp_auth.rb
 lib/stomp_server_ng/stomp_frame.rb
+lib/stomp_server_ng/stomp_frame_recognizer.rb
 lib/stomp_server_ng/stomp_id.rb
 lib/stomp_server_ng/stomp_user.rb
 lib/stomp_server_ng/test_server.rb

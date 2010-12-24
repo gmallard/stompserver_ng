@@ -1,3 +1,11 @@
+== 1.0.4 / 24 Dec 2010
+
+* Use EM::epoll if available
+* Refactor, remove unused methods
+* Refactor, move recognizer and monitor to separate files
+* Use hanna style docs only if hanna is present
+* Smoke tested under Ruby 1.9.2p80 (2010-12-02 revision 30049) [i686-linux]
+
 == 1.0.3 / 01 Jun 2010
 
 * Add tested support for activerecord message stores with examples.

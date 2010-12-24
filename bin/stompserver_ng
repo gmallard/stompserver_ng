@@ -14,8 +14,13 @@ if $HTTP_ENABLE
   require 'mongrel'
   require 'stomp_server/protocols/http'
 end
-
-
+#
+# Use epoll if available.
+#
+EventMachine::epoll
+#
+# Run.
+#
 EventMachine::run do
 
   ## Get the configuration and initialize the stomp engine
