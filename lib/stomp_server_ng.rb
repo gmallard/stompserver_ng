@@ -16,7 +16,7 @@ require 'stomp_server_ng/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '1.0.3'
+  VERSION = '1.0.4'
   #
   # session ID cache manager
   #
