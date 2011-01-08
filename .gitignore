@@ -23,4 +23,9 @@ html/
 # Private temporary files
 #
 .temp*
+#
+# gem files
+#
+*.gem
+pkg/
 
