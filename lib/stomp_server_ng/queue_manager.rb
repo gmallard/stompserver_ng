@@ -183,7 +183,7 @@ class QueueManager
   # Called from the protocol handler (unsubscribe method).
   #
   def unsubscribe(dest, connection)
-    @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}"
+    @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}, connection #{connection}"
     @queues.each do |d, queue|
       queue.delete_if { |qu| qu.connection == connection and d == dest}
     end
