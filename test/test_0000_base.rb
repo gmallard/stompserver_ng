@@ -96,5 +96,10 @@ class Test_0000_Base < Test::Unit::TestCase
     @conn.subscribe(qname, headers, subId)
   end
 
+  #
+  def name
+    "19x_name"
+  end if RUBY_VERSION =~ /1\.9/
+
 end # of class
 
