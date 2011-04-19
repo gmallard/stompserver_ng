@@ -122,7 +122,9 @@ class QueueManager
 
     # :startdoc:
 
-    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
+# The following log call results in an exception using 1.9.2p180.  I cannot
+# recreate this using IRB.  It has something to do with 'Struct's I think.
+#    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
 
 
     case possible_queues
@@ -151,7 +153,8 @@ class QueueManager
 
     #
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
-    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
+# Ditto for this log statement using 1.9.2p180.
+#    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
     #
     frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)

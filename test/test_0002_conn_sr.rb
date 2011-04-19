@@ -42,15 +42,16 @@ class Test_0002_Conn_SR < Test_0000_Base
   # Test a single send and receive over different connections.
   def test_0020_send_receive
     received = nil
+    queuename = "/queue/connsr_0020/" + name()
     mtosend = @test_message + "-0020"
     assert_nothing_raised() {
-      @conn.publish(@queuename, mtosend)
+      @conn.publish(queuename, mtosend)
       sleep 3
     }
     teardown
     setup
     assert_nothing_raised() {
-      connection_subscribe(@queuename)
+      connection_subscribe(queuename)
       Timeout::timeout(4) do
         received = @conn.receive 
       end
@@ -67,10 +68,11 @@ class Test_0002_Conn_SR < Test_0000_Base
   # no message will ever be received.
   def test_0030_send_receive
     received = nil
+    queuename = "/queue/connsr_0030/" + name()
     mtosend = @test_message + "-0030"
     assert_nothing_raised() {
-      connection_subscribe(@queuename)  # This
-      @conn.publish(@queuename, mtosend)
+      connection_subscribe(queuename)  # This
+      @conn.publish(queuename, mtosend)
       sleep 4                           # plus this cause fail
       # NOTE!!! - without the above 'sleep':
       # AMQ will sometimes fail, and sometimes succeed.  It seems to 
@@ -79,7 +81,7 @@ class Test_0002_Conn_SR < Test_0000_Base
     teardown
     setup
     assert_nothing_raised() {
-      connection_subscribe(@queuename)
+      connection_subscribe(queuename)
     }
     assert_raise(Timeout::Error) {
       Timeout::timeout(4) do
