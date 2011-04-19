@@ -31,7 +31,7 @@ class Test_0002_Conn_SR < Test_0000_Base
     received = nil
     mtosend = @test_message + "-0010"
     assert_nothing_raised() {
-      @conn.send(@queuename, mtosend) 
+      @conn.publish(@queuename, mtosend) 
       connection_subscribe(@queuename)
       received = @conn.receive 
     }
@@ -44,7 +44,7 @@ class Test_0002_Conn_SR < Test_0000_Base
     received = nil
     mtosend = @test_message + "-0020"
     assert_nothing_raised() {
-      @conn.send(@queuename, mtosend)
+      @conn.publish(@queuename, mtosend)
       sleep 3
     }
     teardown
@@ -70,7 +70,7 @@ class Test_0002_Conn_SR < Test_0000_Base
     mtosend = @test_message + "-0030"
     assert_nothing_raised() {
       connection_subscribe(@queuename)  # This
-      @conn.send(@queuename, mtosend)
+      @conn.publish(@queuename, mtosend)
       sleep 4                           # plus this cause fail
       # NOTE!!! - without the above 'sleep':
       # AMQ will sometimes fail, and sometimes succeed.  It seems to 

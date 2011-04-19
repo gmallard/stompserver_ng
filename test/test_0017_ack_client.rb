@@ -55,7 +55,7 @@ class Test_0017_Ack_Client < Test_0000_Base
     count = 0
     assert_nothing_raised() {
       params[:times].times do |n|
-        @client.send(@queue_name, "#{@test_message} #{n+1}", 
+        @client.publish(@queue_name, "#{@test_message} #{n+1}", 
           {"persistent" => true, 
           "client-id" => "0017_putr_#{params[:mod]}", 
           "reply-to" => @queue_name} )

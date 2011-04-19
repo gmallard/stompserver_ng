@@ -85,7 +85,7 @@ class Test_0022_Ack_Noack_Conn < Test_0000_Base
   def no_ack_get()
     received = nil
     assert_nothing_raised() {
-      @conn.send(@queuename, @test_message)
+      @conn.publish(@queuename, @test_message)
       #
       connection_subscribe(@queuename, { "ack" => "client" })
       received = @conn.receive 

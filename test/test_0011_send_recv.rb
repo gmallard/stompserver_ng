@@ -33,7 +33,7 @@ class Test_0011_Send_Recv < Test_0000_Base
     assert_nothing_raised() {
       received = nil
       #
-      @client.send(@queue_name, @test_message, 
+      @client.publish(@queue_name, @test_message, 
         {"persistent" => true, 
         "client-id" => "0011_sr1send", 
         "reply-to" => @queue_name} )
@@ -53,7 +53,7 @@ class Test_0011_Send_Recv < Test_0000_Base
       received = nil
       #
       @times.times do |n|
-        @client.send(@queue_name, @test_message + " #{n}", 
+        @client.publish(@queue_name, @test_message + " #{n}", 
           {"persistent" => true, 
           "client-id" => "0011_srXsend", 
           "reply-to" => @queue_name} )

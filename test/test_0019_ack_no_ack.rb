@@ -96,7 +96,7 @@ class Test_0019_Ack_No_Ack < Test_0000_Base
     received = nil
     assert_nothing_raised() {
       # Send a single message to a queue
-      @client.send(@queue_name, @test_message, 
+      @client.publish(@queue_name, @test_message, 
         {"persistent" => true, 
           "client-id" => "ana_client_put", 
           "reply-to" => @queue_name} )

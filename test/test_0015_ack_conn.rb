@@ -56,7 +56,7 @@ class Test_0015_Ack_Conn < Test_0000_Base
     received = nil
     assert_nothing_raised() {
       ntimes.times do |n|
-        @conn.send(@queuename, "#{@test_message} #{n+1}")
+        @conn.publish(@queuename, "#{@test_message} #{n+1}")
       end
     }
     #
