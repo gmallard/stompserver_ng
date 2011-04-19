@@ -266,8 +266,17 @@ class Stomp < EventMachine::Connection
   def subscribe(frame)
     use_ack = false
     use_ack = true  if frame.headers['ack'] == 'client'
+    #
+    if frame.headers['id']
+      subid = frame.headers['id']
+    elsif frame.headers[:id]
+      subid = frame.headers[:id]
+    else
+      subid = nil
+    end
+    #
     if frame.dest =~ %r|^/queue|
-      @@queue_manager.subscribe(frame.dest, self,use_ack)
+      @@queue_manager.subscribe(frame.dest, self, use_ack, subid)
     else
       @@topic_manager.subscribe(frame.dest, self)
     end
