@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{stompserver_ng}
-  s.version = "1.0.5"
+  s.version = "1.0.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Patrick Hurley", "Lionel Bouton", "snacktime", "gyver", "Mike Mangino", "robl", "gmallard"]
-  s.date = %q{2011-03-14}
+  s.date = %q{2011-04-21}
   s.default_executable = %q{stompserver_ng}
   s.description = %q{STOMP Next Generation Ruby server.}
   s.email = ["phurley-blocked@rubyforge.org", "lionel-dev@bouton.name", "snacktime@somewhere.com", "gyver@somewhere.com", "mmangino-blocked@rubyforge.org", "robl@monkeyhelper.com", "allard.guy.m@gmail.com"]
@@ -86,6 +86,7 @@ Gem::Specification.new do |s|
     "test/test_0017_ack_client.rb",
     "test/test_0019_ack_no_ack.rb",
     "test/test_0022_ack_noack_conn.rb",
+    "test/test_0030_subscr_id.rb",
     "test/test_0040_receipt_conn.rb",
     "test/ts_all_server.rb"
   ]
@@ -108,6 +109,7 @@ Gem::Specification.new do |s|
     "test/test_0017_ack_client.rb",
     "test/test_0019_ack_no_ack.rb",
     "test/test_0022_ack_noack_conn.rb",
+    "test/test_0030_subscr_id.rb",
     "test/test_0040_receipt_conn.rb",
     "test/ts_all_server.rb"
   ]

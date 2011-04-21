@@ -52,7 +52,7 @@ class Test_0040_Receipt_Conn < Test_0000_Base
     # Put something on the queue
     open_conn()
     assert_nothing_raised() {
-      @conn.send(@queuename, @test_message) 
+      @conn.publish(@queuename, @test_message) 
     }
     disconnect_conn()
     # Now get it with a receipt requested.

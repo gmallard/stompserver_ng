@@ -36,7 +36,7 @@
 module StompServer
 #
 class QueueManager
-  Struct::new('QueueUser', :connection, :ack)
+  Struct::new('QueueUser', :connection, :ack, :subid)
   #
   # Queue manager initialization.
   #
@@ -65,9 +65,9 @@ class QueueManager
   #
   # Called from the protocol handler (subscribe method).
   #
-  def subscribe(dest, connection, use_ack=false)
-    @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}"
-    user = Struct::QueueUser.new(connection, use_ack)
+  def subscribe(dest, connection, use_ack=false, subid = nil)
+    @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}, subid: #{subid}"
+    user = Struct::QueueUser.new(connection, use_ack, subid)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
   end
@@ -122,7 +122,9 @@ class QueueManager
 
     # :startdoc:
 
-    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
+# The following log call results in an exception using 1.9.2p180.  I cannot
+# recreate this using IRB.  It has something to do with 'Struct's I think.
+#    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
 
 
     case possible_queues
@@ -151,7 +153,8 @@ class QueueManager
 
     #
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
-    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
+# Ditto for this log statement using 1.9.2p180.
+#    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
     #
     frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
@@ -239,6 +242,7 @@ class QueueManager
   def send_to_user(frame, user)
     @@log.debug("#{user.connection.session_id} QM send_to_user")
     connection = user.connection
+    frame.headers['subscription'] = user.subid if user.subid
     if user.ack
       # raise on internal logic error.
       raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]

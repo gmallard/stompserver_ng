@@ -3,6 +3,7 @@ require 'stomp'
 require 'test/unit'
 require 'yaml'
 require 'timeout'
+require 'digest/sha1'
 #
 class Test_0000_Base < Test::Unit::TestCase
 
@@ -95,6 +96,12 @@ class Test_0000_Base < Test::Unit::TestCase
   def connection_subscribe(qname, headers = {}, subId = nil)
     @conn.subscribe(qname, headers, subId)
   end
+
+  #
+  def name
+    tstr = Time.now.to_f.to_s
+    "19x_name_" + Digest::SHA1.hexdigest(tstr)
+  end if RUBY_VERSION =~ /1\.9/
 
 end # of class
 
