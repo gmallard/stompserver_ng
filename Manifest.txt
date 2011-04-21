@@ -66,5 +66,6 @@ test/test_0015_ack_conn.rb
 test/test_0017_ack_client.rb
 test/test_0019_ack_no_ack.rb
 test/test_0022_ack_noack_conn.rb
+test/test_0030_subscr_id.rb
 test/test_0040_receipt_conn.rb
 test/ts_all_server.rb

@@ -1,3 +1,14 @@
+== 1.0.6 / 21 Apr 2011
+
+* Change tests to use 'publish' not 'send'
+* Fix broken tests under Ruby 1.9.1p180
+* Handle subscriptions when 'id' header is specified
+
+== 1.0.5 / 14 Mar 2011
+
+* Correct exception during unsubscribe
+* Replace 'hoe' with 'jeweler'
+
 == 1.0.4 / 24 Dec 2010
 
 * Use EM::epoll if available
