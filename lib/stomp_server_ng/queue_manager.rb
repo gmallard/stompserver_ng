@@ -35,8 +35,18 @@
 #
 module StompServer
 #
+class QueueUser
+  #
+  attr_accessor :connection, :ack, :subid
+  #
+  def initialize(connection = nil, ack = nil, subid = nil)
+    @connection = connection
+    @ack = ack
+    @subid = subid
+  end
+end
+#
 class QueueManager
-  Struct::new('QueueUser', :connection, :ack, :subid)
   #
   # Queue manager initialization.
   #
@@ -70,7 +80,7 @@ class QueueManager
   #
   def subscribe(dest, connection, use_ack=false, subid = nil)
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}, subid: #{subid}"
-    user = Struct::QueueUser.new(connection, use_ack, subid)
+    user = StompServer::QueueUser.new(connection, use_ack, subid)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
   end
