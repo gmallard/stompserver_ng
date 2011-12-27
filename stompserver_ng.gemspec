@@ -4,14 +4,13 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{stompserver_ng}
-  s.version = "1.0.6"
+  s.name = "stompserver_ng"
+  s.version = "1.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Patrick Hurley", "Lionel Bouton", "snacktime", "gyver", "Mike Mangino", "robl", "gmallard"]
-  s.date = %q{2011-04-21}
-  s.default_executable = %q{stompserver_ng}
-  s.description = %q{STOMP Next Generation Ruby server.}
+  s.date = "2011-12-27"
+  s.description = "STOMP Next Generation Ruby server."
   s.email = ["phurley-blocked@rubyforge.org", "lionel-dev@bouton.name", "snacktime@somewhere.com", "gyver@somewhere.com", "mmangino-blocked@rubyforge.org", "robl@monkeyhelper.com", "allard.guy.m@gmail.com"]
   s.executables = ["stompserver_ng"]
   s.extra_rdoc_files = [
@@ -90,32 +89,12 @@ Gem::Specification.new do |s|
     "test/test_0040_receipt_conn.rb",
     "test/ts_all_server.rb"
   ]
-  s.homepage = %q{http://github.com/gmallard/stompserver_ng}
+  s.homepage = "http://github.com/gmallard/stompserver_ng"
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.7}
-  s.summary = %q{A very light messaging server, next generation}
-  s.test_files = [
-    "test/noserver/mocklogger.rb",
-    "test/noserver/test_queue_manager.rb",
-    "test/noserver/test_stomp_frame.rb",
-    "test/noserver/test_topic_manager.rb",
-    "test/noserver/ts_all_no_server.rb",
-    "test/test_0000_base.rb",
-    "test/test_0001_conn.rb",
-    "test/test_0002_conn_sr.rb",
-    "test/test_0006_client.rb",
-    "test/test_0011_send_recv.rb",
-    "test/test_0015_ack_conn.rb",
-    "test/test_0017_ack_client.rb",
-    "test/test_0019_ack_no_ack.rb",
-    "test/test_0022_ack_noack_conn.rb",
-    "test/test_0030_subscr_id.rb",
-    "test/test_0040_receipt_conn.rb",
-    "test/ts_all_server.rb"
-  ]
+  s.rubygems_version = "1.8.11"
+  s.summary = "A very light messaging server, next generation"
 
   if s.respond_to? :specification_version then
-    current_version = Gem::Specification::CURRENT_SPECIFICATION_VERSION
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
