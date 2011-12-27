@@ -64,6 +64,9 @@ class QueueManager
   # Client subscribe for a destination.
   #
   # Called from the protocol handler (subscribe method).
+	#
+	# Problem: Call is synchronous, per each SUBSCRIBE currently in the received
+	# data.
   #
   def subscribe(dest, connection, use_ack=false, subid = nil)
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}, subid: #{subid}"

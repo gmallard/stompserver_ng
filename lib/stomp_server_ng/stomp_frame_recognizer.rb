@@ -53,7 +53,7 @@ class StompFrameRecognizer
   
   def parse
     count = @frames.size
-    
+    @@log.debug("StompFrameRecognizer parse count: #{count}")    
     parse_header unless @frame.command
     if @frame.command
       if @body_length
@@ -69,6 +69,7 @@ class StompFrameRecognizer
   end
   
   def<< (buf)
+    @@log.debug("StompFrameRecognizer buf is: #{buf.inspect}")    
     @buffer << buf
     parse
   end    

@@ -310,7 +310,7 @@ class Stomp < EventMachine::Connection
       # Limit log message length.
       logdata = data
       logdata = data[0..256] + "...truncated..." if data.length > 256
-      @@log.debug "#{@session_id} receive_data: #{logdata.inspect}"
+      @@log.debug "#{@session_id} stomp_receive_data: #{logdata.inspect}"
       # Append all data to the recognizer buffer.
       @sfr << data
       # Process any stomp frames in this set of data.
@@ -329,7 +329,12 @@ class Stomp < EventMachine::Connection
   #
   def process_frames
     frame = nil
-    process_frame(frame) while frame = @sfr.frames.shift
+    @@log.debug "Frames Array Size: #{@sfr.frames.size}"
+#    process_frame(frame) while frame = @sfr.frames.shift
+    while frame = @sfr.frames.shift
+	    @@log.debug "Next Frame: #{frame.inspect}"
+			process_frame(frame)
+		end
   end
   #
   # process_frame
