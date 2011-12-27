@@ -61,22 +61,15 @@ class Test_0002_Conn_SR < Test_0000_Base
   end
 
   # Test a single send and receive over different connections,
-  # issue subscribe before send:
-  # stompserver - fail
-  # AMQ - fail
-  # Note: 'fail' means that the second connection will issue 'receive', and
-  # no message will ever be received.
+  # issue subscribe before send.
   def test_0030_send_receive
     received = nil
     queuename = "/queue/connsr_0030/" + name()
     mtosend = @test_message + "-0030"
     assert_nothing_raised() {
-      connection_subscribe(queuename)  # This
+      connection_subscribe(queuename)
       @conn.publish(queuename, mtosend)
-      sleep 4                           # plus this cause fail
-      # NOTE!!! - without the above 'sleep':
-      # AMQ will sometimes fail, and sometimes succeed.  It seems to 
-      # depend on timing, current system load, .....
+      sleep 4
     }
     teardown
     setup

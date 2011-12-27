@@ -33,7 +33,7 @@ class Test_0015_Ack_Conn < Test_0000_Base
   def test_0010_ack_conn_one
     ack_conn_test("ack")
   end
-=begin
+
   # Test ACK of a single message using symbol header
   def test_0020_ack_conn_one_sym
     ack_conn_test(:ack)
@@ -48,7 +48,7 @@ class Test_0015_Ack_Conn < Test_0000_Base
   def test_0040_ack_conn_mult_sym
     ack_conn_test(:ack, @times)
   end
-=end
+
   private
 
   def ack_conn_test(ackparm = nil, ntimes = 1)
