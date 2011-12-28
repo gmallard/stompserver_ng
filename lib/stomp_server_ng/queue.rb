@@ -31,7 +31,7 @@ module StompServer
       end
 
       @queues.keys.each do |dest|
-        @@log.debug "Q  #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
+        @@log.debug "Q #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
       end
 
       @@log.debug("Q #{self} initialized in #{@directory}")
@@ -92,7 +92,7 @@ module StompServer
 
     # close_queue
     def close_queue(dest, session_id)
-      @@log.debug "#{session_id} close_queue"
+      @@log.debug "#{session_id} close_queue #{dest}"
       if @queues[dest][:size] == 0 and @queues[dest][:frames].size == 0 and @delete_empty
         _close_queue(dest)
         @queues.delete(dest)
@@ -103,7 +103,7 @@ module StompServer
 
     # open_queue
     def open_queue(dest, session_id)
-      @@log.debug "#{session_id} open_queue"
+      @@log.debug "#{session_id} open_queue #{dest}"
       # New queue
       @queues[dest] = Hash.new
       # New frames for this queue
@@ -117,7 +117,7 @@ module StompServer
       @queues[dest][:dequeued] = 0
       @queues[dest][:exceptions] = 0
       _open_queue(dest)
-      @@log.debug "Created queue #{dest}"
+      @@log.debug "#{session_id} created queue #{dest}"
     end
 
     # requeue
@@ -159,10 +159,10 @@ module StompServer
 
     # enqueue
     def enqueue(dest,frame)
-      @@log.debug "#{frame.headers['session']} enqueue"
+      @@log.debug "#{frame.headers['session']} enqueue  #{dest}"
       open_queue(dest, frame.headers['session']) unless @queues.has_key?(dest)
       msgid = assign_id(frame, dest)
-      @@log.debug("#{frame.headers['session']} Enqueue for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
+      @@log.debug("#{frame.headers['session']} Enqueue for #{dest} for message: #{msgid} Client: #{frame.headers['client-id'] if frame.headers['client-id']}")
       writeframe(dest,frame,msgid)
 
       # update queues (queues[dest])
