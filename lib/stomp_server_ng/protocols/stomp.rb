@@ -42,9 +42,9 @@ class Stomp < EventMachine::Connection
     else
       @session_id = StompServer::SessionIDManager.get_cache_id(@@options[:session_cache])
     end
-    @@log.debug("#{@session_id} #{self} Session ID assigned")
+    @@log.debug("#{@session_id}  Session ID assigned")
     #
-    @@log.warn("#{@session_id} #{self} Protocol initialization complete")
+    @@log.warn("#{@session_id}  Protocol initialization complete")
   end
 
 # :stopdoc:
@@ -98,7 +98,7 @@ class Stomp < EventMachine::Connection
   #
   # Protocol handler post initialization.
   def post_init
-    @sfr = StompServer::StompFrameRecognizer.new
+    @sfr = StompServer::StompFrameRecognizer.new(@session_id)
     @transactions = {}
     @connected = false
     @@log.debug("#{@session_id} protocol post_init complete")
@@ -183,7 +183,7 @@ class Stomp < EventMachine::Connection
   #
   def abort(frame, trans=nil)
     raise "#{@session_id} Missing transaction" unless trans
-    raise "#{@session_id} transaction does not exist" unless @transactions.has_key?(trans)
+    raise "#{@session_id} transaction does not exist: #{trans}" unless @transactions.has_key?(trans)
     @transactions.delete(trans)
   end
   #
@@ -224,7 +224,7 @@ class Stomp < EventMachine::Connection
         raise "#{@session_id} {self} Invalid Login"
       end
     end
-    @@log.warn "#{@session_id} Connecting"
+    @@log.warn "#{@session_id} attempting connect"
     response = StompServer::StompFrame.new("CONNECTED", {'session' => @session_id})
     #
     stomp_send_data(response)
@@ -329,10 +329,10 @@ class Stomp < EventMachine::Connection
   #
   def process_frames
     frame = nil
-    @@log.debug "Frames Array Size: #{@sfr.frames.size}"
+    @@log.debug "#{@session_id} Frames Array Size: #{@sfr.frames.size}"
 #    process_frame(frame) while frame = @sfr.frames.shift
     while frame = @sfr.frames.shift
-	    @@log.debug "Next Frame: #{frame.inspect}"
+	    @@log.debug "#{@session_id} Next Frame: #{frame.inspect}"
 			process_frame(frame)
 		end
   end
@@ -343,8 +343,8 @@ class Stomp < EventMachine::Connection
   #
   def process_frame(frame)
     cmd = frame.command.downcase.to_sym
-    raise "#{@session_id} #{self} Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
-    raise "#{@session_id} #{self} Not connected" if !@connected && cmd != :connect
+    raise "#{@session_id}  Unhandled frame: #{cmd}" unless VALID_COMMANDS.include?(cmd)
+    raise "#{@session_id}  Not connected" if !@connected && cmd != :connect
     @@log.debug("#{@session_id} process_frame: #{frame.command}")
     # Add session ID to the frame headers
     frame.headers['session'] = @session_id

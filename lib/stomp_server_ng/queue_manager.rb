@@ -79,7 +79,7 @@ class QueueManager
 	# data.
   #
   def subscribe(dest, connection, use_ack=false, subid = nil)
-    @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}, subid: #{subid}"
+    @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, subid: #{subid}"
     user = StompServer::QueueUser.new(connection, use_ack, subid)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
@@ -199,7 +199,7 @@ class QueueManager
   # Called from the protocol handler (unsubscribe method).
   #
   def unsubscribe(dest, connection)
-    @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}, connection #{connection}"
+    @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}"
     @queues.each do |d, queue|
       queue.delete_if { |qu| qu.connection == connection and d == dest}
     end

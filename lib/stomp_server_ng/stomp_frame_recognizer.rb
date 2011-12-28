@@ -3,7 +3,8 @@ module StompServer
 class StompFrameRecognizer
   attr_accessor :frames
   
-  def initialize
+  def initialize(sess_id)
+    @session_id = sess_id
     @buffer = ''
     @body_length = nil
     @frame = StompServer::StompFrame.new
@@ -15,7 +16,7 @@ class StompFrameRecognizer
   
   def parse_body(len)
     # 1.8 / 1.9 compat 
-    raise RuntimeError.new("Invalid stompframe (missing null term)") unless @buffer[len].to_i == 0
+    raise RuntimeError.new("#{@session_id} Invalid stompframe (missing null term)") unless @buffer[len].to_i == 0
     @frame.body = @buffer[0...len]
     @buffer = @buffer[len+1..-1]
     @frames << @frame
@@ -29,7 +30,7 @@ class StompFrameRecognizer
   end
   
   def parse_text_body
-    @@log.debug("StompFrameRecognizer parse_text_body starts")
+    @@log.debug("#{@session_id} StompFrameRecognizer parse_text_body starts")
     pos = @buffer.index(0.chr)  # 1.8 / 1.9 compat
     if pos
       parse_body(pos)
@@ -53,7 +54,7 @@ class StompFrameRecognizer
   
   def parse
     count = @frames.size
-    @@log.debug("StompFrameRecognizer parse count: #{count}")    
+    @@log.debug("#{@session_id} StompFrameRecognizer parse count: #{count}")    
     parse_header unless @frame.command
     if @frame.command
       if @body_length
@@ -69,7 +70,7 @@ class StompFrameRecognizer
   end
   
   def<< (buf)
-    @@log.debug("StompFrameRecognizer buf is: #{buf.inspect}")    
+    @@log.debug("#{@session_id} StompFrameRecognizer buf is: #{buf.inspect}")    
     @buffer << buf
     parse
   end    
