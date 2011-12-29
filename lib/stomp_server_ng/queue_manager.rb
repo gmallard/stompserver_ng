@@ -44,6 +44,10 @@ class QueueUser
     @ack = ack
     @subid = subid
   end
+  #
+  def to_s
+    "!!#{@connection}!!#{@ack}!!#{@subid}!!"
+  end
 end
 #
 class QueueManager
@@ -116,7 +120,7 @@ class QueueManager
         users.detect{|u| u.connection == connection}
     }
     if possible_queues.empty?
-      @@log.debug "#{connection.session_id} QM  s_a_b nothing to send"
+      @@log.debug "#{connection.session_id} QM s_a_b nothing to send"
       return
     end
     #
@@ -135,10 +139,7 @@ class QueueManager
 
     # :startdoc:
 
-# The following log call results in an exception using 1.9.2p180.  I cannot
-# recreate this using IRB.  It has something to do with 'Struct's I think.
-#    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
-
+    @@log.debug("#{connection.session_id} QM s_a_b possible_queues: #{possible_queues.inspect}")
 
     case possible_queues
       when Hash
@@ -161,13 +162,12 @@ class QueueManager
         user_index = rand(dest_data[1].size)     # Random index
         user = dest_data[1][user_index]  # Array entry from Hash table entry
       else
-        raise "#{connection.session_id} something is very not right : #{RUBY_VERSION}"
+        raise "#{connection.session_id} QM s_a_b something is very not right : #{RUBY_VERSION}"
     end
 
     #
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
-# Ditto for this log statement using 1.9.2p180.
-#    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
+    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
     #
     frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
@@ -200,8 +200,8 @@ class QueueManager
   #
   def unsubscribe(dest, connection)
     @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}"
-    @destusers.each do |d, queue|
-      queue.delete_if { |qu| qu.connection == connection and d == dest}
+    @destusers.each_pair do |d, user_list|
+      user_list.delete_if { |qu| qu.connection == connection and d == dest}
     end
     @destusers.delete(dest) if @destusers[dest].empty?
   end
@@ -244,9 +244,9 @@ class QueueManager
       @connections_pending_acks.delete connection
     end
     #
-    @destusers.each do |dest, queue|
-      queue.delete_if { |qu| qu.connection == connection }
-      @destusers.delete(dest) if queue.empty?
+    @destusers.each_pair do |dest, user_list|
+      user_list.delete_if { |qu| qu.connection == connection }
+      @destusers.delete(dest) if user_list.empty?
     end
   end
   #
