@@ -9,6 +9,7 @@ require 'stomp_server_ng/topic_manager'
 require 'stomp_server_ng/queue_manager'
 require 'stomp_server_ng/qmonitor'
 require 'stomp_server_ng/queue'
+require 'stomp_server_ng/heart_beats'
 require 'stomp_server_ng/queue/memory_queue'
 require 'stomp_server_ng/queue/file_queue'
 require 'stomp_server_ng/queue/dbm_queue'
@@ -16,7 +17,17 @@ require 'stomp_server_ng/protocols/stomp'
 require 'logger'
 
 module StompServer
-  VERSION = '1.1.0'
+  #
+  # Constants
+  #
+  VERSION = '1.1.0'   # Current version
+  #
+  SPL_10 = "1.0"      # Protocol level
+  SPL_11 = "1.1"      # Protocol level
+  #
+  SUPPORTED = [ SPL_10, SPL_11 ]
+  #
+  VHOST = "stompserver_ng"
   #
   # session ID cache manager
   #

@@ -18,7 +18,7 @@ VALID_COMMANDS = [
 #
 class Stomp < EventMachine::Connection
 
-  attr_reader :session_id
+  attr_reader :session_id, :conn_options
 
   # Protocol handler initialization
   def initialize(*args)
@@ -43,6 +43,10 @@ class Stomp < EventMachine::Connection
       @session_id = StompServer::SessionIDManager.get_cache_id(@@options[:session_cache])
     end
     @@log.debug("#{@session_id}  Session ID assigned")
+    #
+    @conn_options = { :protocol => StompServer::SPL_10, # Assume 1.0 at start
+        :hbh => nil,   # No heartbeat handler for now
+      }
     #
     @@log.warn("#{@session_id}  Protocol initialization complete")
   end
@@ -225,10 +229,14 @@ class Stomp < EventMachine::Connection
       end
     end
     @@log.warn "#{@session_id} attempting connect"
-    response = StompServer::StompFrame.new("CONNECTED", {'session' => @session_id})
+    response = _init_connection(frame)
     #
     stomp_send_data(response)
-    @connected = true
+    if response.command == "CONNECTED"
+      @connected = true
+    else
+      close_connection_after_writing
+    end
   end
   #
   # Stomp Protocol - DISCONNECT
@@ -375,8 +383,8 @@ class Stomp < EventMachine::Connection
   #
   # Send a single error frame.
   #
-  def send_error(msg)
-    send_frame("ERROR",{'message' => 'See below'},msg)
+  def send_error(msg, headers = {'message' => 'See below'})
+    send_frame("ERROR", headers, msg)
   end
   #
   # send_frame
@@ -405,6 +413,46 @@ class Stomp < EventMachine::Connection
   end
 
   #
+  private
+
+  def _init_connection(frame)
+    response = StompServer::StompFrame.new("CONNECTED", {'session' => @session_id})
+    er = StompServer::StompFrame.new("ERROR", {})
+    return response if frame.headers["accept-version"].nil? && frame.headers["host"].nil?
+    # Required headers checks
+    if frame.headers["accept-version"].nil?
+      er.headers["no-protocol"] = "missing"
+      er.body = "The 'accept-version' header is required."
+      return er
+    end
+    #
+    if frame.headers["host"].nil?
+      er.headers["no-host"] = "missing"
+      er.body = "The 'host' header is required."
+      return er
+    end
+    # Protocol match determination
+    cp = frame.headers["accept-version"].split(",")
+    use_proto = nil
+    (StompServer::SUPPORTED.size-1).downto(0) do |i|
+      use_proto = cp.include?(StompServer::SUPPORTED[i]) ? StompServer::SUPPORTED[i] : nil
+      break if use_proto
+    end
+    unless use_proto
+      er.headers["no-protocol"] = "not-supported"
+      er.body = "Supported protocol levels are: " + StompServer::SUPPORTED.join(",")
+      return er
+    end
+    response.headers["version"] = use_proto
+    @conn_options[:protocol] = use_proto
+    # Heart beat checks: TODO
+    response.headers["heart-beat"] = "0,0" # None to be used
+    #
+    response.headers["server"] = StompServer::VHOST + "/" + StompServer::VERSION
+    #
+    response
+  end
+
 end # class Stomp < EventMachine::Connection
 #
 end # module StompServer::Protocols
