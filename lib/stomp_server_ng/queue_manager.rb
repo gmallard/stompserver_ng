@@ -56,10 +56,10 @@ class QueueManager
     @@log.debug("QM QueueManager initialize comletes")
     #
     @qstore = qstore
-    @queues = Hash.new { Array.new }
-    @pending = Hash.new
+    @destusers = Hash.new { Array.new }
+    @connections_pending_acks = Hash.new
     if $STOMP_SERVER
-      monitor = StompServer::QueueMonitor.new(@qstore,@queues)
+      monitor = StompServer::QueueMonitor.new(@qstore,@destusers)
       monitor.start
       @@log.debug "QM monitor started by QM initialization"
     end
@@ -81,7 +81,7 @@ class QueueManager
   def subscribe(dest, connection, use_ack=false, subid = nil)
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, subid: #{subid}"
     user = StompServer::QueueUser.new(connection, use_ack, subid)
-    @queues[dest] += [user]
+    @destusers[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
   end
   #
@@ -111,7 +111,7 @@ class QueueManager
 
     # :startdoc:
 
-    possible_queues = @queues.select{ |destination, users|
+    possible_queues = @destusers.select{ |destination, users|
       @qstore.message_for?(destination, connection.session_id) &&
         users.detect{|u| u.connection == connection}
     }
@@ -200,10 +200,10 @@ class QueueManager
   #
   def unsubscribe(dest, connection)
     @@log.debug "#{connection.session_id} QM unsubscribe from #{dest}"
-    @queues.each do |d, queue|
+    @destusers.each do |d, queue|
       queue.delete_if { |qu| qu.connection == connection and d == dest}
     end
-    @queues.delete(dest) if @queues[dest].empty?
+    @destusers.delete(dest) if @destusers[dest].empty?
   end
   #
   # Client ack.
@@ -213,20 +213,20 @@ class QueueManager
   def ack(connection, frame)
     @@log.debug "#{connection.session_id} QM ACK."
     @@log.debug "#{connection.session_id} QM ACK for frame: #{frame.inspect}"
-    unless @pending[connection]
+    unless @connections_pending_acks[connection]
       @@log.debug "#{connection.session_id} QM No message pending for connection!"
       return
     end
     msgid = frame.headers['message-id']
-    p_msgid = @pending[connection].headers['message-id']
+    p_msgid = @connections_pending_acks[connection].headers['message-id']
     if p_msgid != msgid
       @@log.debug "#{connection.session_id} QM ACK Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
       # We don't know what happened, we requeue
       # (probably a client connecting to a restarted server)
-      frame = @pending[connection]
+      frame = @connections_pending_acks[connection]
       @qstore.requeue(frame.headers['destination'],frame)
     end
-    @pending.delete connection
+    @connections_pending_acks.delete connection
     # We are free to work now, look if there's something for us
     send_a_backlog(connection)
   end
@@ -237,16 +237,16 @@ class QueueManager
   #
   def disconnect(connection)
     @@log.debug("#{connection.session_id} QM DISCONNECT.")
-    frame = @pending[connection]
+    frame = @connections_pending_acks[connection]
     @@log.debug("#{connection.session_id} QM DISCONNECT pending frame: #{frame.inspect}")
     if frame
       @qstore.requeue(frame.headers['destination'],frame)
-      @pending.delete connection
+      @connections_pending_acks.delete connection
     end
     #
-    @queues.each do |dest, queue|
+    @destusers.each do |dest, queue|
       queue.delete_if { |qu| qu.connection == connection }
-      @queues.delete(dest) if queue.empty?
+      @destusers.delete(dest) if queue.empty?
     end
   end
   #
@@ -258,9 +258,9 @@ class QueueManager
     frame.headers['subscription'] = user.subid if user.subid
     if user.ack
       # raise on internal logic error.
-      raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]
+      raise "#{user.connection.session_id} other connection's end already busy" if @connections_pending_acks[connection]
       # A maximum of one frame can be pending ACK.
-      @pending[connection] = frame
+      @connections_pending_acks[connection] = frame
     end
     connection.stomp_send_data(frame)
   end
@@ -275,7 +275,7 @@ class QueueManager
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
     # Lookup a user willing to handle this destination
-    available_users = @queues[dest].reject{|user| @pending[user.connection]}
+    available_users = @destusers[dest].reject{|user| @connections_pending_acks[user.connection]}
     if available_users.empty?
       @qstore.enqueue(dest,frame)
       return
