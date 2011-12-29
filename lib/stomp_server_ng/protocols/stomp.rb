@@ -445,10 +445,18 @@ class Stomp < EventMachine::Connection
     end
     response.headers["version"] = use_proto
     @conn_options[:protocol] = use_proto
-    # Heart beat checks: TODO
-    response.headers["heart-beat"] = "0,0" # None to be used
-    #
+    # Server Identity
     response.headers["server"] = StompServer::VHOST + "/" + StompServer::VERSION
+    # Heart beat checks: TODO
+    if @conn_options[:protocol] >= StompServer::SPL_11 # 1.1 connections might use heartbeats
+      response.headers["heart-beat"] = @@options[:heart_beat] # Server default is: 0,0
+      if frame.headers["heart-beat"] && frame.headers["heart-beat"] != "0,0" && @@options[:heart_beat] != "0,0"
+        # set up heartbeats here
+        raise "TODO: Add hearbeat support"
+      end
+    else # 1.0 connections do not use heartbeats
+      response.headers["heart-beat"] = "0,0"
+    end
     #
     response
   end

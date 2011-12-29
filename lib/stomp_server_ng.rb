@@ -166,6 +166,7 @@ module StompServer
         :port => 61613,                 # -p
         :pidfile => 'stompserver.pid',  # -P
         :queue => 'memory',             # -q
+        :heart_beat => '0,0',           # -r
         :storage => ".stompserver",     # -s
         :session_cache => 0,            # -S
         :working_dir => Dir.getwd,      # -w
@@ -250,11 +251,11 @@ module StompServer
 
       # :port
       opts_parser.on("-p", "--port=PORT", Integer, 
-        "Change the port (default: 61613)") {|p| 
+        "Change the port (default: 61613)") {|p|
         hopts[:port] = p}
 
       # :pidfile
-      opts_parser.on("-P", "--pidfile=PIDFILE", Integer, 
+      opts_parser.on("-P", "--pidfile=PIDFILE", String, 
         "PID file name (default: stompserver.pid)") {|p| 
         hopts[:pidfile] = p} # new
 
@@ -262,6 +263,11 @@ module StompServer
       opts_parser.on("-q", "--queuetype=QUEUETYPE", String, 
         "Queue type (memory|dbm|activerecord|file) (default: memory)") {|q| 
         hopts[:queue] = q}
+
+      # :heart_beat
+      opts_parser.on("-r", "--heart_beat=SX,SY", String, 
+        "Server heart beat default SX,SY") {|r| 
+        hopts[:heart_beat] = r}
 
       # :storage
       opts_parser.on("-s", "--storage=DIR", String, 
@@ -293,7 +299,6 @@ module StompServer
         puts opts_parser
         exit
       end
-
       opts_parser.parse(ARGV)
 
       # Handle the config file
