@@ -296,20 +296,6 @@ class QueueManager
       send_to_user(frame, random_user)
     end
   end
-  #
-  # dequeue: remove a message from a queue.
-  #
-  def dequeue(dest, session_id)
-    @qstore.dequeue(dest, session_id)
-  end
-  #
-  # enqueue: add a message to a queue.
-  #
-  def enqueue(frame)
-    frame.command = "MESSAGE"
-    dest = frame.headers['destination']
-    @qstore.enqueue(dest,frame)
-  end
 end # of class
 end # of module
 
