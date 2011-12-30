@@ -7,13 +7,8 @@ require 'stomp_server_ng'
 require 'optparse'
 require 'logger'
 
-$STOMP_SERVER = true
+$STOMP_SERVER = true # See the queue manager, required for monitor start
 
-$HTTP_ENABLE = false
-if $HTTP_ENABLE
-  require 'mongrel'
-  require 'stomp_server/protocols/http'
-end
 #
 # Use epoll if available.
 #
@@ -49,15 +44,4 @@ EventMachine::run do
         config.opts             # Options hash
       )
 
-  # TODO: any http testing and protocol handler changes required.
-  if $HTTP_ENABLE
-    log.debug "Http protocol handler starting on #{config.opts[:host]} port 8080"
-    EventMachine.start_server(config.opts[:host], 8080, StompServer::Protocols::Http) {|s| s.instance_eval {
-        @@auth_required=stomp.auth_required
-        @@queue_manager=stomp.queue_manager
-        @@topic_manager=stomp.topic_manager
-        @@stompauth = stomp.stompauth
-      }
-    }
-  end
 end
