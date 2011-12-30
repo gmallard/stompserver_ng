@@ -29,6 +29,8 @@ module StompServer
   #
   VHOST = "stompserver_ng"
   #
+  HEART_BEAT = "\n"
+  #
   # session ID cache manager
   #
   class SessionIDManager
@@ -161,6 +163,7 @@ module StompServer
         :config => 'stompserver.conf',  # -C
         :debug => false,                # -d
         :logdir => 'log',               # -D
+        :hblogf => false,               # -f
         :log_level => 'error',          # -l
         :logfile => 'stompserver.log',  # -L
         :port => 61613,                 # -p
@@ -238,6 +241,11 @@ module StompServer
       opts_parser.on("-D", "--logdir=LOGDIR", String, 
         "Log file directory  (default: log)") {|d| 
         hopts[:logdir] = d} # new
+
+      # :hblogf
+      opts_parser.on("-f", "--hblogf", String, 
+        "Turn on heartbeat fire logging") {|d| 
+        hopts[:hblogf] = true}
 
       # :log_level
       opts_parser.on("-l", "--log_level=LEVEL", String, 

@@ -19,12 +19,13 @@ module StompServer
     #
     attr_reader :hb_received # receive 'dirty' flag
     #
-    def initialize(cliparms, svrparms, conn)
+    def initialize(cliparms, svrparms, conn, flog = false)
       #
       @@log = Logger.new(STDOUT)
       @@log.level = StompServer::LogHelper.get_loglevel()
       #
       @connection = conn
+      @firelog = flog
       @hb_received = true # We just now got a CONNECT frame here .....
       #
       @cx = @cy = @sx = @sy = 0, # Variable names as in spec
@@ -74,11 +75,12 @@ module StompServer
         while true do
           sleep sleeptime
           curt = Time.now.to_f
+          @@log.warn("#{@connection.session_id} send ticker fire: #{curt}") if @firelog
           delta = curt - @ls
           if delta > (@sti - (@sti/5.0)) / 1000000.0 # Be tolerant (minus)
             # Send a heartbeat
             @@log.warn("#{@connection.session_id} send ticker sending a heart beat")
-            @connection.send_data("\n")
+            @connection.send_data(StompServer::HEART_BEAT)
             @ls = Time.now.to_f
           end
           Thread.pass
@@ -93,11 +95,8 @@ module StompServer
         while true do
           sleep sleeptime
           curt = Time.now.to_f
+          @@log.warn("#{@connection.session_id} receive ticker fire: #{curt}") if @firelog
           delta = curt - @lr
-
-          # A true debugging logger call:
-          # @@log.debug("#{@connection.session_id} receive ticker curt: #{curt} delta: #{delta} lr: #{@lr} comp: #{(@rti + (@rti/4.0)) / 1000000.0}")
-
           if delta > ((@rti + (@rti/5.0)) / 1000000.0) # Be tolerant (plus)
             @hb_received = false # Flag bad
             @@log.warn("#{@connection.session_id} receive ticker missed heartbeat: #{@lr}")

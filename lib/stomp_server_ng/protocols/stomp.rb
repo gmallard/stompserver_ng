@@ -123,6 +123,15 @@ class Stomp < EventMachine::Connection
   # Delegate to stomp_receive_data helper.
   #
   def receive_data(data)
+    # Update received time for heartbeat mechanism if necessary
+    if @conn_options[:heart_beat] && @conn_options[:heart_beat].hbr
+      tn = Time.now.to_f
+
+      # Debugging call:
+      # @@log.debug("#{@session_id} stomp_receive_data tick time: #{tn}")
+
+      @conn_options[:heart_beat].lr = tn
+    end
     stomp_receive_data(data)
   end
 
@@ -319,22 +328,16 @@ class Stomp < EventMachine::Connection
   # 
   def stomp_receive_data(data)
     begin
-      # Limit log message length.
-      logdata = data
-      logdata = data[0..256] + "...truncated..." if data.length > 256
-      @@log.debug "#{@session_id} stomp_receive_data: #{logdata.inspect}" if logdata != "\n" # Ignore heartbeats
-      if @conn_options[:heart_beat] && @conn_options[:heart_beat].hbr
-        tn = Time.now.to_f
-
-        # Debugging call:
-        # @@log.debug("#{@session_id} stomp_receive_data tick time: #{tn}")
-
-        @conn_options[:heart_beat].lr = tn
+      if data != StompServer::HEART_BEAT
+        # Limit log message length.
+        logdata = data
+        logdata = data[0..256] + "...truncated..." if data.length > 256
+        @@log.debug "#{@session_id} stomp_receive_data: #{logdata.inspect}"
+        # Append all data to the recognizer buffer.
+        @sfr << data
+        # Process any stomp frames in this set of data.
+        process_frames
       end
-      # Append all data to the recognizer buffer.
-      @sfr << data
-      # Process any stomp frames in this set of data.
-      process_frames
     rescue Exception => e
       @@log.error "#{@session_id} err: #{e} #{e.backtrace.join("\n")}"
       send_error(e.to_s)
@@ -473,7 +476,10 @@ class Stomp < EventMachine::Connection
         response.headers["heart-beat"] = @@options[:heart_beat] # Server default is: 0,0 (Command line start override)
         if frame.headers["heart-beat"] && frame.headers["heart-beat"] != "0,0" && @@options[:heart_beat] != "0,0"
           # Heartbeats _might_ be possible.
-          @conn_options[:heart_beat] = StompServer::HeartBeats.new(frame.headers["heart-beat"], @@options[:heart_beat], self)
+          @conn_options[:heart_beat] = StompServer::HeartBeats.new(frame.headers["heart-beat"], 
+            @@options[:heart_beat], 
+            self,
+            @@options[:hblogf])
         end
     end
     #
