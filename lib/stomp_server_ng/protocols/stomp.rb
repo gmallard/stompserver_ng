@@ -243,6 +243,10 @@ class Stomp < EventMachine::Connection
   #
   def disconnect(frame)
     @@log.warn "#{@session_id} Polite disconnect"
+    if @conn_options[:heart_beat]
+      @conn_options[:heart_beat].st.kill if @conn_options[:heart_beat].st
+      @conn_options[:heart_beat].rt.kill if @conn_options[:heart_beat].rt
+    end
     close_connection_after_writing
   end
   #
@@ -318,7 +322,15 @@ class Stomp < EventMachine::Connection
       # Limit log message length.
       logdata = data
       logdata = data[0..256] + "...truncated..." if data.length > 256
-      @@log.debug "#{@session_id} stomp_receive_data: #{logdata.inspect}"
+      @@log.debug "#{@session_id} stomp_receive_data: #{logdata.inspect}" if logdata != "\n" # Ignore heartbeats
+      if @conn_options[:heart_beat] && @conn_options[:heart_beat].hbr
+        tn = Time.now.to_f
+
+        # Debugging call:
+        # @@log.debug("#{@session_id} stomp_receive_data tick time: #{tn}")
+
+        @conn_options[:heart_beat].lr = tn
+      end
       # Append all data to the recognizer buffer.
       @sfr << data
       # Process any stomp frames in this set of data.
@@ -337,8 +349,7 @@ class Stomp < EventMachine::Connection
   #
   def process_frames
     frame = nil
-    @@log.debug "#{@session_id} Frames Array Size: #{@sfr.frames.size}"
-#    process_frame(frame) while frame = @sfr.frames.shift
+    @@log.debug "#{@session_id} Frames Array Size: #{@sfr.frames.size}" if @sfr.frames.size > 0 # Ignore heartbeats
     while frame = @sfr.frames.shift
 	    @@log.debug "#{@session_id} Next Frame: #{frame.inspect}"
 			process_frame(frame)
@@ -407,9 +418,15 @@ class Stomp < EventMachine::Connection
   #
   # stomp_send_data
   #
+  # Should be the very last method called when putting data on the wire,
+  # with the exception of the 1.1+ heartbeat mechanism.
+  #
   def stomp_send_data(frame)
     @@log.debug "#{@session_id} Sending frame #{frame.to_s}"
     send_data(frame.to_s)
+    if @conn_options[:heart_beat] && @conn_options[:heart_beat].hbs
+      @conn_options[:heart_beat].ls = Time.now.to_f
+    end
   end
 
   #
@@ -447,15 +464,17 @@ class Stomp < EventMachine::Connection
     @conn_options[:protocol] = use_proto
     # Server Identity
     response.headers["server"] = StompServer::VHOST + "/" + StompServer::VERSION
-    # Heart beat checks: TODO
-    if @conn_options[:protocol] >= StompServer::SPL_11 # 1.1 connections might use heartbeats
-      response.headers["heart-beat"] = @@options[:heart_beat] # Server default is: 0,0
-      if frame.headers["heart-beat"] && frame.headers["heart-beat"] != "0,0" && @@options[:heart_beat] != "0,0"
-        # set up heartbeats here
-        raise "TODO: Add hearbeat support"
-      end
-    else # 1.0 connections do not use heartbeats
-      response.headers["heart-beat"] = "0,0"
+
+    # Heart beat checks
+    case @conn_options[:protocol]
+      when StompServer::SPL_10
+        response.headers["heart-beat"] = "0,0"
+      else
+        response.headers["heart-beat"] = @@options[:heart_beat] # Server default is: 0,0 (Command line start override)
+        if frame.headers["heart-beat"] && frame.headers["heart-beat"] != "0,0" && @@options[:heart_beat] != "0,0"
+          # Heartbeats _might_ be possible.
+          @conn_options[:heart_beat] = StompServer::HeartBeats.new(frame.headers["heart-beat"], @@options[:heart_beat], self)
+        end
     end
     #
     response
