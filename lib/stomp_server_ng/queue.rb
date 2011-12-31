@@ -33,20 +33,7 @@ module StompServer
       @queues.keys.each do |dest|
         @@log.debug "Q #{self} dest=#{dest} size=#{@queues[dest][:size]} enqueued=#{@queues[dest][:enqueued]} dequeued=#{@queues[dest][:dequeued]}"
       end
-
       @@log.debug("Q #{self} initialized in #{@directory}")
-
-      #
-      # Cleanup dead queues and save the state of the queues every so often.  
-      # Alternatively we could save the queue state every X number
-      # of frames that are put in the queue.  
-      # Should probably also read it after saving it to confirm integrity.
-      #
-      # Removed: this badly corrupts the queue when stopping with messages
-      #
-      # EventMachine::add_periodic_timer 1800, proc {@queues.keys.each 
-      # {|dest| close_queue(dest)};save_queue_state }
-      #
     end
 
     # stop
@@ -126,15 +113,7 @@ module StompServer
       open_queue(dest, frame.headers['session']) unless @queues.has_key?(dest)
       msgid = frame.headers['message-id']
       #
-      # Note: frame.headers['max-exceptions'] is currently _never_ set any where!
-      #
-      if frame.headers['max-exceptions'] and @frames[dest][msgid][:exceptions] >= frame.headers['max-exceptions'].to_i
-        enqueue("/queue/deadletter",frame)
-        return
-      end
-      #
       writeframe(dest,frame,msgid)
-
       # update queues (queues[dest])
       # :size, :frames, :msgid, :enqueued, :dequeued, :exceptions
       @queues[dest][:size] += 1

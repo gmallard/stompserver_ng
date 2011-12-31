@@ -86,17 +86,17 @@ class QueueManager
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, subid: #{subid}"
     user = StompServer::QueueUser.new(connection, use_ack, subid)
     @destusers[dest] += [user]
-    send_destination_backlog(dest,user) unless dest == '/queue/monitor'
+    send_on_subscribe(dest,user) unless dest == '/queue/monitor'
   end
   #
-  # send_a_backlog
+  # send_on_ack_nack
   #
   # Send at most one frame to a connection.
   # Used when use_ack == true.
   # Called from the ack method.
   #
-  def send_a_backlog(connection)
-    @@log.debug "#{connection.session_id} QM send_a_backlog starts"
+  def send_on_ack_nack(connection)
+    @@log.debug "#{connection.session_id} QM send_on_ack_nack starts"
     #
     # lookup queues with data for this connection
     #
@@ -120,7 +120,7 @@ class QueueManager
         users.detect{|u| u.connection == connection}
     }
     if possible_queues.empty?
-      @@log.debug "#{connection.session_id} QM s_a_b nothing to send"
+      @@log.debug "#{connection.session_id} QM s_oan nothing to send"
       return
     end
     #
@@ -129,17 +129,7 @@ class QueueManager
     #
     # Select a random destination from those possible
 
-    # :stopdoc:
-
-    # Told ya' this would get ugly.  A quote from the Pickaxe.  I am:
-    #
-    # 'abandoning the benefits of polymorphism, and bringing the gods of refactoring down around my ears'
-    #
-    # :-)
-
-    # :startdoc:
-
-    @@log.debug("#{connection.session_id} QM s_a_b possible_queues: #{possible_queues.inspect}")
+    @@log.debug("#{connection.session_id} QM s_oan possible_queues: #{possible_queues.inspect}")
 
     case possible_queues
       when Hash
@@ -162,31 +152,32 @@ class QueueManager
         user_index = rand(dest_data[1].size)     # Random index
         user = dest_data[1][user_index]  # Array entry from Hash table entry
       else
-        raise "#{connection.session_id} QM s_a_b something is very not right : #{RUBY_VERSION}"
+        raise "#{connection.session_id} QM s_oan something is very not right : #{RUBY_VERSION}"
     end
 
     #
-    @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
-    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
+    @@log.debug "#{connection.session_id} QM s_oan chosen -> dest: #{dest}"
+    @@log.debug "#{connection.session_id} QM s_oan chosen -> user: #{user}"
     #
     frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
   end
   #
-  # send_destination_backlog
+  # send_on_subscribe
   #
   # Called from the subscribe method.
   #
-  def send_destination_backlog(dest,user)
-    @@log.debug "#{user.connection.session_id} QM send_destination_backlog for #{dest}"
+  def send_on_subscribe(dest,user)
+    @@log.debug "#{user.connection.session_id} QM send_on_subscribe for #{dest}"
     if user.ack
       # Only send one message, then wait for client ACK.
       frame = @qstore.dequeue(dest, user.connection.session_id)
       if frame
         send_to_user(frame, user)
-        @@log.debug("#{user.connection.session_id} QM s_d_b single frame sent")
+        @@log.debug("#{user.connection.session_id} QM s_os single frame sent")
       end
     else
+      @@log.debug("#{user.connection.session_id} QM s_os all frames sent")
       # Send all available messages.
       while frame = @qstore.dequeue(dest, user.connection.session_id)
         send_to_user(frame, user)
@@ -211,7 +202,6 @@ class QueueManager
   # Called from the protocol handler (ack method).
   #
   def ack(connection, frame)
-    @@log.debug "#{connection.session_id} QM ACK."
     @@log.debug "#{connection.session_id} QM ACK for frame: #{frame.inspect}"
     unless @connections_pending_acks[connection]
       @@log.debug "#{connection.session_id} QM No message pending for connection!"
@@ -228,7 +218,7 @@ class QueueManager
     end
     @connections_pending_acks.delete connection
     # We are free to work now, look if there's something for us
-    send_a_backlog(connection)
+    send_on_ack_nack(connection)
   end
   #
   # Client disconnect.
