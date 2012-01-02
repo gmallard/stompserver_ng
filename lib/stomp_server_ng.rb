@@ -103,8 +103,8 @@ module StompServer
       logger.debug "stomp_server version: #{StompServer::VERSION}"
       # ruby version for all versions
       logger.debug "ruby: ver=#{RUBY_VERSION}p#{RUBY_PATCHLEVEL} (reldate=#{RUBY_RELEASE_DATE})"
-      # more ruby version information for 1.9+
-      if RUBY_VERSION =~ /1.9/
+      # more ruby version information for 1.9+, including 2+
+      if RUBY_VERSION >= "1.9"
         logger.debug "ruby: rev=#{RUBY_REVISION} engine=#{RUBY_ENGINE}"
       end
     end
@@ -119,7 +119,7 @@ module StompServer
           optname = str_opt.to_sym
           logger.debug("Option: #{optname}=#{opts[optname]}")
         end
-      else  # 1.9 version
+      else  # 1.9+ version
         opts.keys.sort.each do |optname|
           logger.debug("Option: #{optname}=#{opts[optname]}")
         end
