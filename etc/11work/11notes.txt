@@ -1,0 +1,126 @@
+runserver.sh
+
+ -bin/stompserver_ng
+  . EM Run
+  . Configurator (options ....)
+  . Run instance (queue manager, topic manager, ...
+
+     . Create qstore instance (all < Queue)
+         : @queues (a Hash)
+            key: a destination
+            value: a Hash
+               the value Hash has a key named :frames, with a value of an Array
+               which is an array of message ids
+               keys are:
+                :frames // An array of message ids
+                :size // A count of elements in :frames **Why is this needed?? **
+                :msgid // A number..... ???? seems inconsistent ....... maybe not, check abort tests ....
+                :enqueued // A count
+                :dequeued // A count
+                :exceptions // A count
+                :queue_dir // The actual queue directory name for a file type queue store
+         : @frames (a Hash)
+            key: a destination
+            value: a Hash
+                key: message ids
+                value: another Hash
+                  keys are:
+                    :exceptions // A count (**DOES this == the :exceptions in the @queues ??**)
+                    :requeued // A count
+
+     // The entire data structure here needs to be reviewed, modified, re-designed, ....
+     . Create queue manager (with qstore input)
+         : @queues (a Hash) *** -> @destusers
+            key: a destination
+            value: An Array of QueueUser instances
+         : @pending (a Hash) // Used for current 'ack' implementation.  Allows
+                             // at most one message to be 'pending' an ACK per
+                             // *each* connection ........
+                            *** -> @connections_pending_acks
+            key: a connection // *!!!!* this needs to change ........ HOW??
+            value: a *single* frame // *!!!!* this needs to change ........ HOW??
+
+  . Start the EM Event loop
+
+
+/////////////////////////////////////////////////////////////////////////
+
+General TODO notes:
+
+- header encoding//decoding ???
+  what does a broker do here?  seems like a client library responsibility??
+
+- duplicate headers
+  if they are on the wire inbound for 1.1+ only:
+    keep them
+    put them on the wire outbound (in order)
+
+- support NACKs: see below
+
+- subscription IDs's and ACKs and NACKs
+  there is a data structure problem currently (see above)
+  has to do with ACK modes in 1.0
+  for 1.1:
+    - current ack=>auto should remain unchanged
+    - current ack=>client becomes ack=>client-single behavior
+    - new ack=>client becomes ..... ????
+
+/////////////////////////////////////////////////////////////////////////
+
+Approach:
+
+1) Get *all* done with 'file' system store
+2) Test with 'memory' store
+3) Test with 'DBM' store:
+  - sqlite3
+  - postgres
+  - mysql
+
+/////////////////////////////////////////////////////////////////////////
+
+Side Tracks
+-----------
+
+A. Transactions ...... a segue to figure out how these actually work.
+Used with SEND (and possible ACKs in the middle of a SEND sequence) transactions
+seem to work.  Frames are accumuated in the protocol handler, and flushed
+to the QM on commit (or just deleted on abort).
+
+So the SEND tactics are:
+
+a) Use transactions, BEGIN, SENDs, and COMMIT/ABORT *or*
+b) SEND with receipt required, wait for RECEIPT
+
+The above should work for SENDing.  Is it implemented properly?  It is all in
+protocol handler, the QM knows nothing about it ..........
+
+But with SUBSCRIBE ??  How should transactions work ??  The specs (both) reference
+using a 'transaction' header on ACK (and NACK for 1.1).  There are no 
+adequate tests for this, either in this code or in the Ruby 'stomp' gem.
+
+Answer: do *not* use transactions for 'reliable' receiving of messages.  Use
+the SUBSCRIBE with 'client' or 'client-individual', coupled with the required
+ACK/NACK responses.  (Note:  ACK or NACK should be able to request a receipt,
+providing maximum reliability).
+
+
+/////////////////////////////////////////////////////////////////////////
+
+Design Points
+-------------
+
+A. The transaction data store.  This is in the PH, should it be in the QM?
+
+B. The pending ack/nack data store. This is in the QM, but does not support
+more than one pending message ('client-individual' SUBSCRIBE).
+
+For 1.1:
+
+. 'auto' -> remains as now
+. 'client-individual' -> current 'client' behavior
+' 'client' internal behavior needs to be designed.  Need to remember what has
+been sent, and what has been ACkd/NACKd.  For example:  an ACK needs to sweep
+through all previous messages and treat them as 'complete'.
+- What should a NACK do?
+
+
