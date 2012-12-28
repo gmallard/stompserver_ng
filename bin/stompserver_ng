@@ -15,14 +15,16 @@ $STOMP_SERVER = true # See the queue manager, required for monitor start
 EventMachine::epoll if RUBY_VERSION < "1.9.4" # Avoid problems on Ruby's current "trunk"
 # "trunk' was 1.9.4 for a short time span, and is currently 2.0.0.
 #
+
+## Get the configuration and initialize the stomp engine
+config = StompServer::Configurator.new
+stomp = StompServer::Run.new(config.opts)
+stomp.start
+
+#
 # Run.
 #
 EventMachine::run do
-
-  ## Get the configuration and initialize the stomp engine
-  config = StompServer::Configurator.new
-  stomp = StompServer::Run.new(config.opts)
-  stomp.start
 
   log = Logger.new(STDOUT)
   log.level = Logger::DEBUG
@@ -32,6 +34,10 @@ EventMachine::run do
   
   log.debug "Client authorization enabled" if config.opts[:auth]
 
+  # Queue Monitor start
+  if $STOMP_SERVER
+    stomp.queue_manager.monitor_start()
+  end
   ## Start protocol handlers
 
   log.debug "Stomp protocol handler starting on #{config.opts[:host]} port #{config.opts[:port]}"

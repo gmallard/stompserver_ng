@@ -62,11 +62,14 @@ class QueueManager
     @qstore = qstore
     @destusers = Hash.new { Array.new }
     @connections_pending_acks = Hash.new
-    if $STOMP_SERVER
-      monitor = StompServer::QueueMonitor.new(@qstore,@destusers)
-      monitor.start
-      @@log.debug "QM monitor started by QM initialization"
-    end
+  end
+  #
+  # Monitor start
+  #
+  def monitor_start()
+    monitor = StompServer::QueueMonitor.new(@qstore,@destusers)
+    monitor.start
+    @@log.debug "QM monitor started by QM initialization"
   end
   #
   # Server stop / shutdown.
