@@ -351,9 +351,11 @@ module StompServer
     # Intiialize
     def initialize(opts)
       @@log = Logger.new(STDOUT)
+      @opts = opts
+#      @@log = Logger.new(@opts[:logfile])
+#      StompServer::LogHelper.set_loglevel(@opts)
       @@log.level = StompServer::LogHelper.get_loglevel()
 
-      @opts = opts
       @queue_manager = nil
       @auth_required = nil
       @stompauth = nil
