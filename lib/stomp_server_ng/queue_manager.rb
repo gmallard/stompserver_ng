@@ -36,7 +36,7 @@
 module StompServer
 #
 class QueueManager
-  Struct::new('QueueUser', :connection, :ack, :subid)
+  Struct::new('QueueUser', :connection, :ack, :subid, :pending)
   #
   # Queue manager initialization.
   #
@@ -47,7 +47,7 @@ class QueueManager
     #
     @qstore = qstore
     @queues = Hash.new { Array.new }
-    @pending = Hash.new
+
     if $STOMP_SERVER
       monitor = StompServer::QueueMonitor.new(@qstore,@queues)
       monitor.start
@@ -67,7 +67,7 @@ class QueueManager
   #
   def subscribe(dest, connection, use_ack=false, subid = nil)
     @@log.debug "#{connection.session_id} QM subscribe to #{dest}, ack => #{use_ack}, connection: #{connection}, subid: #{subid}"
-    user = Struct::QueueUser.new(connection, use_ack, subid)
+    user = Struct::QueueUser.new(connection, use_ack, subid, nil)
     @queues[dest] += [user]
     send_destination_backlog(dest,user) unless dest == '/queue/monitor'
   end
@@ -78,84 +78,20 @@ class QueueManager
   # Used when use_ack == true.
   # Called from the ack method.
   #
-  def send_a_backlog(connection)
+  def send_a_backlog(user)
+    connection = user.connection
     @@log.debug "#{connection.session_id} QM send_a_backlog starts"
-    #
-    # lookup queues with data for this connection
-    #
 
-    # :stopdoc:
+    # Since pending is queue-based, we only need to try to send a message to the
+    # queue for the user that the 'ack'd message was sent to.
+    # Unfortunately we don't know what that was.  We DO however know the 'user'
+    # that it was sent to, and we can look up the queues to locate the one that has
+    # this user linked to it (connection + subscription are unique, so there can
+    # be only one user record for this connection connected to a given queue)
+    dest = @queues.map { |dest, users| users.find_index(user) ? dest : nil }.compact.first
 
-    # 1.9 compatability
-    #
-    # The Hash#select method returns:
-    #
-    # * An Array (of Arrays) in Ruby 1.8
-    # * A Hash in Ruby 1.9
-    #
-    # Watch the code in this method.  It is a bit ugly because of that
-    # difference.
-
-    # :startdoc:
-
-    possible_queues = @queues.select{ |destination, users|
-      @qstore.message_for?(destination, connection.session_id) &&
-        users.detect{|u| u.connection == connection}
-    }
-    if possible_queues.empty?
-      @@log.debug "#{connection.session_id} QM  s_a_b nothing to send"
-      return
-    end
-    #
-    # Get a random one (avoid artificial priority between queues
-    # without coding a whole scheduler, which might be desirable later)
-    #
-    # Select a random destination from those possible
-
-    # :stopdoc:
-
-    # Told ya' this would get ugly.  A quote from the Pickaxe.  I am:
-    #
-    # 'abandoning the benefits of polymorphism, and bringing the gods of refactoring down around my ears'
-    #
-    # :-)
-
-    # :startdoc:
-
-# The following log call results in an exception using 1.9.2p180.  I cannot
-# recreate this using IRB.  It has something to do with 'Struct's I think.
-#    @@log.debug("#{connection.session_id} possible_queues: #{possible_queues.inspect}")
-
-
-    case possible_queues
-      when Hash
-        #  possible_queues _is_ a Hash
-        dests_possible = possible_queues.keys     # Get keys of a Hash of destination / queues
-        dest_index = rand(dests_possible.size)    # Random index
-        dest = dests_possible[dest_index]         # Select a destination / queue
-        # The selected destination has (possibly) multiple users.
-        # Select a random user from those possible
-        user_index = rand(possible_queues[dest].size) # Random index
-        user = possible_queues[dest][user_index]  # Array entry from Hash table entry
-        #
-      when Array
-        # possible_queues _is_ an Array
-        dest_index = rand(possible_queues.size)    # Random index
-        dest_data = possible_queues[dest_index]    # Select a destination + user array
-        dest = dest_data[0]                        # Select a destination / queue
-        # The selected destination has (possibly) multiple users.
-        # Select a random user from those possible
-        user_index = rand(dest_data[1].size)     # Random index
-        user = dest_data[1][user_index]  # Array entry from Hash table entry
-      else
-        raise "#{connection.session_id} something is very not right : #{RUBY_VERSION}"
-    end
-
-    #
     @@log.debug "#{connection.session_id} QM s_a_b chosen -> dest: #{dest}"
-# Ditto for this log statement using 1.9.2p180.
-#    @@log.debug "#{connection.session_id} QM s_a_b chosen -> user: #{user}"
-    #
+
     frame = @qstore.dequeue(dest, connection.session_id)
     send_to_user(frame, user)
   end
@@ -200,22 +136,18 @@ class QueueManager
   def ack(connection, frame)
     @@log.debug "#{connection.session_id} QM ACK."
     @@log.debug "#{connection.session_id} QM ACK for frame: #{frame.inspect}"
-    unless @pending[connection]
-      @@log.debug "#{connection.session_id} QM No message pending for connection!"
+    msgid = frame.headers['message-id']
+    user = get_user_for_msgid(connection, msgid)
+
+    unless user
+      @@log.debug "#{connection.session_id} QM No message pending for msgid #{msgid}!"
       return
     end
-    msgid = frame.headers['message-id']
-    p_msgid = @pending[connection].headers['message-id']
-    if p_msgid != msgid
-      @@log.debug "#{connection.session_id} QM ACK Invalid message-id (received /#{msgid}/ != /#{p_msgid}/)"
-      # We don't know what happened, we requeue
-      # (probably a client connecting to a restarted server)
-      frame = @pending[connection]
-      @qstore.requeue(frame.headers['destination'],frame)
-    end
-    @pending.delete connection
+
+    user.pending = nil
+
     # We are free to work now, look if there's something for us
-    send_a_backlog(connection)
+    send_a_backlog(user)
   end
   #
   # Client disconnect.
@@ -224,11 +156,15 @@ class QueueManager
   #
   def disconnect(connection)
     @@log.debug("#{connection.session_id} QM DISCONNECT.")
-    frame = @pending[connection]
-    @@log.debug("#{connection.session_id} QM DISCONNECT pending frame: #{frame.inspect}")
-    if frame
-      @qstore.requeue(frame.headers['destination'],frame)
-      @pending.delete connection
+    users = get_users_for_connection(connection)
+    if users && !users.empty?
+      users.each { |u|
+        if u.pending
+          @@log.debug("#{connection.session_id} QM DISCONNECT pending frame: #{u.pending.inspect}")
+          @qstore.requeue(u.pending.headers['destination'], u.pending)
+          u.pending = nil
+        end
+      }
     end
     #
     @queues.each do |dest, queue|
@@ -241,13 +177,18 @@ class QueueManager
   #
   def send_to_user(frame, user)
     @@log.debug("#{user.connection.session_id} QM send_to_user")
+    unless frame
+      @@log.debug("#{user.connection.session_id} QM s_t_u No message to send")
+      return
+    end
+
     connection = user.connection
     frame.headers['subscription'] = user.subid if user.subid
     if user.ack
       # raise on internal logic error.
-      raise "#{user.connection.session_id} other connection's end already busy" if @pending[connection]
-      # A maximum of one frame can be pending ACK.
-      @pending[connection] = frame
+      raise "#{user.connection.session_id} other connection's end already busy" if user.pending
+      # A maximum of one frame can be pending ACK per subscription/connection.
+      user.pending = frame
     end
     connection.stomp_send_data(frame)
   end
@@ -261,9 +202,10 @@ class QueueManager
     @@log.debug("#{frame.headers['session']} QM client SEND Processing, #{frame}")
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
-    # Lookup a user willing to handle this destination
-    available_users = @queues[dest].reject{|user| @pending[user.connection]}
+    # Lookup a user willing to handle this destination, and aren't waiting for an ACK
+    available_users = @queues[dest].reject{|user| user.pending}
     if available_users.empty?
+      @@log.debug("#{frame.headers['session']} QM sendmsg queuing #{frame}")
       @qstore.enqueue(dest,frame)
       return
     end
@@ -296,6 +238,19 @@ class QueueManager
     frame.command = "MESSAGE"
     dest = frame.headers['destination']
     @qstore.enqueue(dest,frame)
+  end
+  #
+  # get_user_for_msgid: Attempts to find a user that is waiting for an ACK on a given msgid
+  #
+  def get_user_for_msgid(connection, msgid)
+    # There should only be one match, so lets just return it
+    return @queues.values.flatten.select {|u| u.connection == connection && u.pending && u.pending.headers['message-id'] == msgid }.first
+  end
+  #
+  # get_users_for_connection: Returns all users associated with this connection (session-id)
+  #
+  def get_users_for_connection(connection)
+    return @queues.values.flatten.select {|u| u.connection == connection}
   end
 end # of class
 end # of module
