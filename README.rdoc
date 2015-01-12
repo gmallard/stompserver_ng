@@ -11,7 +11,7 @@ Handles basic message queue processing
 
 == REQUIREMENTS - gems:
 
-* eventMachine
+* eventmachine
 * daemons
 * uuid
 
@@ -104,7 +104,12 @@ the next restart.
 
 == INSTALL:
 
-* gem install stompserver_ng
+* Clone this repository
+* In the cloned directory, build the gem (rake build)
+* gem install -l pkg/stompserver_ng-x.y.z.gem
+
+
+== EXECUTION:
 
 stompserver_ng will create a log, etc, and storage directory on startup
 in your current working directory, the value passed to as
